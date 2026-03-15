@@ -3512,7 +3512,7 @@ class Registry {
                     if (stopId == "RAC") {
                         if (!raceDay) {
                             lines[1] = ETALineEntry.textEntry(if (language == "en") "Service on race days only" else "僅在賽馬日提供服務")
-                        } else if (hour >= 15 || hour < 3) {
+                        } else if (hour !in 3..<15) {
                             lines[1] = ETALineEntry.textEntry(if (language == "en") "Last train has departed" else "尾班車已開出")
                         } else {
                             lines[1] = ETALineEntry.textEntry(if (language == "en") "Service has not yet started" else "今日服務尚未開始")
@@ -3532,7 +3532,7 @@ class Registry {
                         if (stopId == "RAC") {
                             if (!raceDay) {
                                 lines[1] = ETALineEntry.textEntry(if (language == "en") "Service on race days only" else "僅在賽馬日提供服務")
-                            } else if (hour >= 15 || hour < 3) {
+                            } else if (hour !in 3..<15) {
                                 lines[1] = ETALineEntry.textEntry(if (language == "en") "Last train has departed" else "尾班車已開出")
                             } else {
                                 lines[1] = ETALineEntry.textEntry(if (language == "en") "Service has not yet started" else "今日服務尚未開始")
@@ -3550,7 +3550,7 @@ class Registry {
                             val seq = trainData.optString("seq").toInt()
                             val platform = trainData.optString("plat").toInt()
                             val specialRoute = trainData.optString("route")
-                            var dest: String = DATA!!.dataSheet.stopList[trainData.optString("dest")]!!.name[language]
+                            var dest = DATA!!.dataSheet.stopList[trainData.optString("dest")]!!.name[language]
                             if (stopId != "AIR") {
                                 if (dest == "博覽館") {
                                     dest = "機場及博覽館"
@@ -3561,7 +3561,7 @@ class Registry {
                             var special = !route.dest.zh.contains(dest)
                             var annotatedDest = dest.asFormattedText()
                             if (specialRoute.isNotEmpty() && !isMtrStopOnOrAfter(stopId, specialRoute, lineName, bound)) {
-                                val via: String = DATA!!.dataSheet.stopList[specialRoute]!!.name[language]
+                                val via = DATA!!.dataSheet.stopList[specialRoute]!!.name[language]
                                 annotatedDest += ((if (language == "en") " via " else " 經") + via).asFormattedText(SmallSize)
                                 special = true
                             }
@@ -3784,8 +3784,8 @@ class Registry {
             val now = currentLocalDateTime() - 1.hours
             val stop = DATA!!.dataSheet.stopList[stops[index]]!!.hkkfStopCode
             val nextStop = DATA!!.dataSheet.stopList[stops[index + 1]]!!.hkkfStopCode
-            val data = getJSONResponse<JsonObject>("https://www.hongkongwatertaxi.com.hk/eta/?route=${stop}${nextStop}")!!
-            if (data.optString("generated_timestamp").takeIf { it.isNotBlank() && !it.equals("null", true) }?.parseInstant()?.toLocalDateTime(hongKongTimeZone)?.let { it < now } == true) {
+            val data = getJSONResponse<JsonObject>("https://www.hongkongwatertaxi.com.hk/eta/?route=${stop}${nextStop}")
+            if (data == null || data.optString("generated_timestamp").takeIf { it.isNotBlank() && !it.equals("null", true) }?.parseInstant()?.toLocalDateTime(hongKongTimeZone)?.let { it < now } == true) {
                 lines[1] = ETALineEntry.textEntry(if (language == "en") "Check Timetable" else "查看時間表")
             } else {
                 var i = 1
@@ -4017,7 +4017,6 @@ class Registry {
             result = 31 * result + resolvedClockTime.hashCode()
             return result
         }
-
 
     }
 

@@ -302,6 +302,7 @@ fun ListRoutesInterface(
     proximitySortOrigin: Coordinates?,
     proximitySortOriginIsRealLocation: Boolean = false,
     showEmptyText: Boolean = true,
+    refreshWhenSizeChange: Boolean,
     visible: Boolean = true,
     maintainScrollPosition: Boolean = true,
     bottomExtraSpace: Dp = 0.dp,
@@ -358,7 +359,9 @@ fun ListRoutesInterface(
     var refresh by remember { mutableIntStateOf(0) }
 
     Box (
-        modifier = Modifier.onSizeChanged { refresh++ }
+        modifier = Modifier.applyIf(refreshWhenSizeChange) {
+            onSizeChanged { refresh++ }
+        }
     ) {
         key(refresh) {
             Scaffold(

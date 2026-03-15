@@ -77,6 +77,7 @@ import androidx.compose.runtime.MutableState
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.derivedStateOf
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.key
 import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.mutableStateMapOf
 import androidx.compose.runtime.mutableStateOf
@@ -536,6 +537,8 @@ fun ListStopsEtaInterface(
         }
     }
 
+    var refresh by remember { mutableIntStateOf(0) }
+
     if (pipMode) {
         PipModeInterface(
             index = selectedStop,
@@ -549,107 +552,113 @@ fun ListStopsEtaInterface(
             instance = instance
         )
     } else {
-        Scaffold(
-            content = { padding ->
-                Column(
-                    modifier = Modifier
-                        .padding(padding)
-                        .fillMaxSize()
-                ) {
-                    RouteBranchBar(
-                        instance = instance,
-                        type = type,
-                        co = co,
-                        routeBranches = routeBranches,
-                        selectedBranchState = selectedBranchState
-                    )
-                    Box(
-                        modifier = Modifier.fillMaxSize()
-                    ) {
-                        LazyColumn(
+        Box (
+            modifier = Modifier.onSizeChanged { refresh++ }
+        ) {
+            key(refresh) {
+                Scaffold(
+                    content = { padding ->
+                        Column(
                             modifier = Modifier
+                                .padding(padding)
                                 .fillMaxSize()
-                                .verticalScrollBar(
-                                    state = scroll,
-                                    scrollbarConfig = ScrollBarConfig(
-                                        indicatorThickness = 6.dp,
-                                        padding = PaddingValues(0.dp, 2.dp, 0.dp, 2.dp)
-                                    )
-                                ),
-                            state = scroll
                         ) {
-                            itemsIndexedPossiblySticky(
-                                items = allStops,
-                                key = { i, _ -> i + 1 },
-                                sticky = { i, _ -> type == ListStopsInterfaceType.TIMES && i + 1 == timesStartIndex }
-                            ) { i, stopData, sticky ->
-                                StopEntry(
-                                    instance = instance,
-                                    type = type,
-                                    selectedStopState = selectedStopState,
-                                    selectedBranchState = selectedBranchState,
-                                    possibleBidirectionalSectionFare = possibleBidirectionalSectionFare,
-                                    alertCheckRoute = alertCheckRoute,
-                                    alternateStopNames = alternateStopNames,
-                                    index = i + 1,
-                                    allStops = allStops,
-                                    stopData = stopData,
-                                    routeBranches = routeBranches,
-                                    routeLineData = routeLineData,
-                                    mtrStopsInterchange = mtrStopsInterchange,
-                                    routeNumber = routeNumber,
-                                    co = co,
-                                    gmbRegion = gmbRegion,
-                                    isKmbCtbJoint = isKmbCtbJoint,
-                                    timesStartIndexState = timesStartIndexState,
-                                    times = times,
-                                    alightReminderHighlightBlinkState = alightReminderHighlightBlinkState,
-                                    alightReminderStateState = alightReminderStateState,
-                                    alightReminderTimeLeftState = alightReminderTimeLeftState,
-                                    alightReminderStopsLeftState = alightReminderStopsLeftState,
-                                    lrtDirectionModeState = lrtDirectionModeState,
-                                    etaResultsState = etaResults,
-                                    etaUpdateTimesState = etaUpdateTimes,
-                                    nextBusPositionState = nextBusPositions,
-                                    sheetTypeState = sheetTypeState,
-                                    togglingAlightReminderState = togglingAlightReminderState,
-                                    alternateStopNamesShowingState = alternateStopNamesShowingState,
-                                    trafficSnapshots = trafficSnapshotsByAllStops?.getOrNull(i),
-                                    sticky = sticky
-                                )
-                                if (sticky) {
-                                    androidx.compose.animation.AnimatedVisibility(
-                                        visible = scroll.firstVisibleItemIndex >= i
-                                    ) {
-                                        HorizontalDivider()
+                            RouteBranchBar(
+                                instance = instance,
+                                type = type,
+                                co = co,
+                                routeBranches = routeBranches,
+                                selectedBranchState = selectedBranchState
+                            )
+                            Box(
+                                modifier = Modifier.fillMaxSize()
+                            ) {
+                                LazyColumn(
+                                    modifier = Modifier
+                                        .fillMaxSize()
+                                        .verticalScrollBar(
+                                            state = scroll,
+                                            scrollbarConfig = ScrollBarConfig(
+                                                indicatorThickness = 6.dp,
+                                                padding = PaddingValues(0.dp, 2.dp, 0.dp, 2.dp)
+                                            )
+                                        ),
+                                    state = scroll
+                                ) {
+                                    itemsIndexedPossiblySticky(
+                                        items = allStops,
+                                        key = { i, _ -> i + 1 },
+                                        sticky = { i, _ -> type == ListStopsInterfaceType.TIMES && i + 1 == timesStartIndex }
+                                    ) { i, stopData, sticky ->
+                                        StopEntry(
+                                            instance = instance,
+                                            type = type,
+                                            selectedStopState = selectedStopState,
+                                            selectedBranchState = selectedBranchState,
+                                            possibleBidirectionalSectionFare = possibleBidirectionalSectionFare,
+                                            alertCheckRoute = alertCheckRoute,
+                                            alternateStopNames = alternateStopNames,
+                                            index = i + 1,
+                                            allStops = allStops,
+                                            stopData = stopData,
+                                            routeBranches = routeBranches,
+                                            routeLineData = routeLineData,
+                                            mtrStopsInterchange = mtrStopsInterchange,
+                                            routeNumber = routeNumber,
+                                            co = co,
+                                            gmbRegion = gmbRegion,
+                                            isKmbCtbJoint = isKmbCtbJoint,
+                                            timesStartIndexState = timesStartIndexState,
+                                            times = times,
+                                            alightReminderHighlightBlinkState = alightReminderHighlightBlinkState,
+                                            alightReminderStateState = alightReminderStateState,
+                                            alightReminderTimeLeftState = alightReminderTimeLeftState,
+                                            alightReminderStopsLeftState = alightReminderStopsLeftState,
+                                            lrtDirectionModeState = lrtDirectionModeState,
+                                            etaResultsState = etaResults,
+                                            etaUpdateTimesState = etaUpdateTimes,
+                                            nextBusPositionState = nextBusPositions,
+                                            sheetTypeState = sheetTypeState,
+                                            togglingAlightReminderState = togglingAlightReminderState,
+                                            alternateStopNamesShowingState = alternateStopNamesShowingState,
+                                            trafficSnapshots = trafficSnapshotsByAllStops?.getOrNull(i),
+                                            sticky = sticky
+                                        )
+                                        if (sticky) {
+                                            androidx.compose.animation.AnimatedVisibility(
+                                                visible = scroll.firstVisibleItemIndex >= i
+                                            ) {
+                                                HorizontalDivider()
+                                            }
+                                        }
+                                    }
+                                    if (selectedStop >= allStops.size) {
+                                        item { HorizontalDivider() }
                                     }
                                 }
-                            }
-                            if (selectedStop >= allStops.size) {
-                                item { HorizontalDivider() }
+                                floatingActions?.invoke(this, scroll)
                             }
                         }
-                        floatingActions?.invoke(this, scroll)
+                        if (sheetType.show) {
+                            ListStopsBottomSheet(
+                                instance = instance,
+                                listRoute = listRoute,
+                                routeBranches = routeBranches,
+                                selectedStopState = selectedStopState,
+                                selectedBranchState = selectedBranchState,
+                                allStops = allStops,
+                                routeNumber = routeNumber,
+                                co = co,
+                                isKmbCtbJoint = isKmbCtbJoint,
+                                sheetTypeState = sheetTypeState,
+                                togglingAlightReminderState = togglingAlightReminderState,
+                                sheetState = sheetState
+                            )
+                        }
                     }
-                }
-                if (sheetType.show) {
-                    ListStopsBottomSheet(
-                        instance = instance,
-                        listRoute = listRoute,
-                        routeBranches = routeBranches,
-                        selectedStopState = selectedStopState,
-                        selectedBranchState = selectedBranchState,
-                        allStops = allStops,
-                        routeNumber = routeNumber,
-                        co = co,
-                        isKmbCtbJoint = isKmbCtbJoint,
-                        sheetTypeState = sheetTypeState,
-                        togglingAlightReminderState = togglingAlightReminderState,
-                        sheetState = sheetState
-                    )
-                }
+                )
             }
-        )
+        }
     }
 }
 
@@ -1118,6 +1127,7 @@ fun ListStopsBottomSheet(
                                 checkSpecialDest = true,
                                 listType = RouteListType.NEARBY,
                                 showEta = true,
+                                refreshWhenSizeChange = false,
                                 showCircularOrigin = false,
                                 recentSort = RecentSortMode.CHOICE,
                                 proximitySortOrigin = origin,

@@ -77,6 +77,7 @@ data class RouteStopETAData(
     val destination: String,
     val stop: String,
     val color: Long,
+    val etaDisplayMode: ETADisplayMode,
     val url: String
 )
 
@@ -133,10 +134,11 @@ object RouteStopETALiveActivity {
             )
             val eta = query.query(Shared.ETA_UPDATE_INTERVAL, DateTimeUnit.MILLISECOND)
             val stopName = selected.stopId.asStop(selected.context)!!.name[Shared.language]
+            val etaDisplayMode = platformLiveNotificationETADisplayMode()
             val data = RouteStopETAData(
                 routeNumber = selected.co.getDisplayRouteNumber(route.routeNumber, shortened = true),
                 hasEta = eta.nextScheduledBus in 0..59,
-                eta = eta.buildETAText(selected.context, ETADisplayMode.CLOCK_TIME),
+                eta = eta.buildETAText(selected.context, etaDisplayMode),
                 minimal = if (eta.nextScheduledBus <= 0L) "-" else (now + eta.nextScheduledBus.minutes).minute.pad(2),
                 remark = if (eta.nextScheduledBus < 0) eta.firstLine.text.string else "",
                 destination = route.resolvedDestWithBranch(
@@ -148,6 +150,7 @@ object RouteStopETALiveActivity {
                 )[Shared.language],
                 stop = if (selected.co.isTrain) stopName else "${selected.stopIndex}. $stopName",
                 color = eta.nextCo.getLineColor(route.routeNumber, 0xFF000000),
+                etaDisplayMode = etaDisplayMode,
                 url = route.getDeepLink(selected.context, selected.stopId, selected.stopIndex)
             )
             handler.invoke(data)
@@ -190,7 +193,7 @@ object RouteStopETALiveActivity {
 
 }
 
-private fun Registry.ETAQueryResult.buildETAText(context: AppContext, etaDisplayMode: ETADisplayMode = Shared.etaDisplayMode): List<String> {
+private fun Registry.ETAQueryResult.buildETAText(context: AppContext, etaDisplayMode: ETADisplayMode): List<String> {
     return when (etaDisplayMode) {
         ETADisplayMode.COUNTDOWN -> {
             val (text1, text2) = this.firstLine.shortText
@@ -234,3 +237,4 @@ private fun Registry.ETAQueryResult.buildETAText(context: AppContext, etaDisplay
 }
 
 expect fun isLiveNotificationBackgroundUpdateSystemAllowed(): Boolean
+expect fun platformLiveNotificationETADisplayMode(): ETADisplayMode

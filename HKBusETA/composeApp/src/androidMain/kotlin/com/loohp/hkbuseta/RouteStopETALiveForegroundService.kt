@@ -11,6 +11,7 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.toArgb
 import androidx.core.app.NotificationCompat
 import androidx.core.net.toUri
+import com.loohp.hkbuseta.common.objects.ETADisplayMode
 import com.loohp.hkbuseta.common.utils.getValue
 import com.loohp.hkbuseta.common.utils.setValue
 import com.loohp.hkbuseta.utils.RouteStopETAData
@@ -57,7 +58,8 @@ class RouteStopETALiveForegroundService: Service() {
         val content: String
         val shortText: String
         if (data.hasEta) {
-            content = data.eta.joinToString(prefix = "${data.stop}\n", separator = " / ") { it }
+            val separator = if (data.etaDisplayMode == ETADisplayMode.CLOCK_TIME_WITH_COUNTDOWN) "\n" else " / "
+            content = data.eta.joinToString(prefix = "${data.stop}\n", separator = separator) { it }
             shortText = data.eta.first()
         } else {
             content = "${data.stop}\n${data.remark}"

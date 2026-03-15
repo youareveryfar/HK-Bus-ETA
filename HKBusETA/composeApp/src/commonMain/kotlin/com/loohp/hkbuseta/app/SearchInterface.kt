@@ -388,6 +388,7 @@ fun SearchInterface(instance: AppActiveContext, visible: Boolean, isChangingPage
                         checkSpecialDest = false,
                         listType = listType,
                         showEta = showEta,
+                        refreshWhenSizeChange = true,
                         showCircularOrigin = showCircularOrigin,
                         recentSort = recentSort,
                         proximitySortOrigin = proximitySortOrigin,
