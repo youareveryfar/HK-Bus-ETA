@@ -1238,6 +1238,10 @@ def add_route_remarks():
         "H4": {
             "zh": "港島旅遊路線",
             "en": "Hong Kong Island Bus Tour"
+        },
+        "H20": {
+            "zh": "九龍旅遊路線",
+            "en": "Kowloon Bus Tour"
         }
     }
     nlb = {}
