@@ -1266,7 +1266,22 @@ def add_route_remarks():
             nlb_routes_data_with_timetables[route_number].append(data)
 
     for bus_route, operator_data in BUS_ROUTE.items():
-        if "kmb" in operator_data and len(kmb_routes_data_with_timetables.get(bus_route, [])) <= 0:
+        if bus_route.startswith("PB"):
+            kmb[bus_route] = {
+                "zh": "寵物巴士團 🐾",
+                "en": "Pet Bus 🐾"
+            }
+        elif bus_route.startswith("PN"):
+            kmb[bus_route] = {
+                "zh": "夜間寵物巴士團 🐾",
+                "en": "Evening Pet Bus 🐾"
+            }
+        elif bus_route.startswith("LB"):
+            kmb[bus_route] = {
+                "zh": "郊遊遠足路線 🏞",
+                "en": "Leisure Bus 🏞"
+            }
+        elif "kmb" in operator_data and len(kmb_routes_data_with_timetables.get(bus_route, [])) <= 0:
             bound1 = get_web_json(f"https://search.kmb.hk/KMBWebSite/Function/FunctionRequest.ashx?action=getSpecialRoute&route={bus_route}&bound=1")["data"]
             bound2 = get_web_json(f"https://search.kmb.hk/KMBWebSite/Function/FunctionRequest.ashx?action=getSpecialRoute&route={bus_route}&bound=2")["data"]
             bound1_text = None
@@ -1288,21 +1303,6 @@ def add_route_remarks():
                         "en": bound2["routes"][0]["Desc_ENG"].strip()
                     }
                     continue
-        if bus_route.startswith("PB"):
-            kmb[bus_route] = {
-                "zh": "寵物巴士團 🐾",
-                "en": "Pet Bus 🐾"
-            }
-        elif bus_route.startswith("PN"):
-            kmb[bus_route] = {
-                "zh": "夜間寵物巴士團 🐾",
-                "en": "Evening Pet Bus 🐾"
-            }
-        elif bus_route.startswith("LB"):
-            kmb[bus_route] = {
-                "zh": "郊遊遠足路線 🏞",
-                "en": "Leisure Bus 🏞"
-            }
 
     ctb_soup_zh = BeautifulSoup(get_web_text("https://mobile.citybus.com.hk/nwp3/printout1.php?l=0", False), "html.parser")
     ctb_soup_en = BeautifulSoup(get_web_text("https://mobile.citybus.com.hk/nwp3/printout1.php?l=1", False), "html.parser")
