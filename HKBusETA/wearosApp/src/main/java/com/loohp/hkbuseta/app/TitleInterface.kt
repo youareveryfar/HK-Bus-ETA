@@ -39,6 +39,8 @@ import androidx.compose.material.icons.filled.Star
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.BlendMode
@@ -64,8 +66,9 @@ import com.loohp.hkbuseta.common.appcontext.AppBundle
 import com.loohp.hkbuseta.common.appcontext.AppIntent
 import com.loohp.hkbuseta.common.appcontext.AppScreen
 import com.loohp.hkbuseta.common.appcontext.ToastDuration
-import com.loohp.hkbuseta.common.objects.takeOrNull
+import com.loohp.hkbuseta.common.objects.takeFirstValidAtOrNull
 import com.loohp.hkbuseta.common.shared.Shared
+import com.loohp.hkbuseta.common.utils.currentLocalDateTime
 import com.loohp.hkbuseta.compose.AdvanceButton
 import com.loohp.hkbuseta.compose.AutoResizeText
 import com.loohp.hkbuseta.compose.FontSizeRange
@@ -273,8 +276,9 @@ fun FavButton(instance: AppActiveContext) {
 fun BottomText(instance: AppActiveContext) {
     val haptic = LocalHapticFeedback.current
     val appAlert by WearOSShared.rememberAppAlert(instance)
+    val now by remember(appAlert) { mutableStateOf(currentLocalDateTime()) }
 
-    appAlert?.takeOrNull()?.let { alert ->
+    appAlert?.takeFirstValidAtOrNull(now)?.let { alert ->
         AutoResizeText(
             modifier = Modifier
                 .padding(30.dp, 0.dp)

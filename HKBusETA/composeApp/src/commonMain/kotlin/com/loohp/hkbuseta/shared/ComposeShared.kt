@@ -28,6 +28,7 @@ import androidx.compose.animation.slideInVertically
 import androidx.compose.animation.slideOutVertically
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.runtime.Composable
@@ -51,9 +52,10 @@ import com.loohp.hkbuseta.appcontext.common
 import com.loohp.hkbuseta.appcontext.composePlatform
 import com.loohp.hkbuseta.common.appcontext.AppActiveContext
 import com.loohp.hkbuseta.common.objects.AppAlert
-import com.loohp.hkbuseta.common.objects.isNotBlank
+import com.loohp.hkbuseta.common.objects.collectValidAlertsAt
 import com.loohp.hkbuseta.common.shared.Registry
 import com.loohp.hkbuseta.common.shared.Shared
+import com.loohp.hkbuseta.common.utils.currentLocalDateTime
 import com.loohp.hkbuseta.common.utils.interpolateColor
 import com.loohp.hkbuseta.compose.ImmediateEffect
 import com.loohp.hkbuseta.compose.PlatformText
@@ -62,6 +64,7 @@ import com.loohp.hkbuseta.compose.clickable
 import com.loohp.hkbuseta.compose.collectAsStateMultiplatform
 import com.loohp.hkbuseta.compose.platformPrimaryContainerColor
 import com.loohp.hkbuseta.compose.platformSurfaceContainerColor
+import com.loohp.hkbuseta.utils.adjustBrightness
 import kotlinx.collections.immutable.ImmutableList
 import kotlinx.collections.immutable.toImmutableList
 import kotlinx.coroutines.delay
@@ -85,16 +88,14 @@ object ComposeShared {
     @Composable
     fun AnimatedVisibilityColumnAppAlert(context: AppActiveContext, appAlert: AppAlert?, visible: Boolean = true) {
         val haptics = LocalHapticFeedback.current
-        var nonNullAppAlert by remember { mutableStateOf(AppAlert.EMPTY) }
+        var validAppAlerts by remember { mutableStateOf(emptyList<AppAlert>()) }
 
         ImmediateEffect (appAlert) {
-            if (appAlert != null) {
-                nonNullAppAlert = appAlert
-            }
+            validAppAlerts = appAlert.collectValidAlertsAt(currentLocalDateTime())
         }
 
         AnimatedVisibility(
-            visible = visible && appAlert?.content?.isNotBlank() == true,
+            visible = visible && validAppAlerts.isNotEmpty(),
             enter = slideInVertically(
                 initialOffsetY = { -it },
                 animationSpec = tween(durationMillis = 300)
@@ -110,21 +111,29 @@ object ComposeShared {
                 animationSpec = tween(durationMillis = 300)
             )
         ) {
-            Box(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .applyIfNotNull(appAlert?.url(Shared.language)?.takeIf { it.isNotBlank() }) { clickable(
-                        onClick = context.handleWebpages(it, false, haptics.common),
-                        role = Role.Button
-                    ) }
-                    .background(if (composePlatform.applePlatform) platformPrimaryContainerColor else platformSurfaceContainerColor)
-                    .padding(10.dp)
-            ) {
-                PlatformText(
-                    fontSize = 16.sp,
-                    lineHeight = 1.1F.em,
-                    text = nonNullAppAlert.content?.get(Shared.language)?: ""
-                )
+            Column {
+                for ((index, currentAppAlert) in validAppAlerts.withIndex()) {
+                    val darker = index % 2 != 0
+                    Box(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .applyIfNotNull(currentAppAlert.url(Shared.language)?.takeIf { it.isNotBlank() }) { clickable(
+                                onClick = context.handleWebpages(it, false, haptics.common),
+                                role = Role.Button
+                            ) }
+                            .background(
+                                color = (if (composePlatform.applePlatform) platformPrimaryContainerColor else platformSurfaceContainerColor)
+                                    .adjustBrightness(if (darker) 0.8F else 1F)
+                            )
+                            .padding(10.dp)
+                    ) {
+                        PlatformText(
+                            fontSize = 16.sp,
+                            lineHeight = 1.1F.em,
+                            text = currentAppAlert.content?.get(Shared.language)?: ""
+                        )
+                    }
+                }
             }
         }
     }

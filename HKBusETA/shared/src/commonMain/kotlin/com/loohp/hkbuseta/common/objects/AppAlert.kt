@@ -20,6 +20,7 @@
 
 package com.loohp.hkbuseta.common.objects
 
+import kotlinx.datetime.LocalDateTime
 import kotlinx.serialization.SerialName
 import kotlinx.serialization.Serializable
 
@@ -28,16 +29,37 @@ data class AppAlert(
     val content: BilingualText? = null,
     @SerialName("url")
     private val urlZh: String? = null,
-    private val urlEn: String? = null
+    private val urlEn: String? = null,
+    private val validFrom: LocalDateTime? = null,
+    private val validTo: LocalDateTime? = null,
+    private val extras: List<AppAlert> = emptyList()
 ) {
-    companion object {
-        val EMPTY = AppAlert(null, null, null)
-    }
+    val isNotBlank: Boolean get() = content?.isNotBlank() == true
+
     fun url(language: String): String? {
         return if (language == "en") (urlEn?: urlZh) else urlZh
     }
+
+    fun isAlertValidAt(time: LocalDateTime): Boolean {
+        return !(validFrom != null && validFrom > time) && !(validTo != null && validTo < time)
+    }
+
+    fun collectValidAlertsAt(time: LocalDateTime): List<AppAlert> {
+        return buildList {
+            if (isNotBlank && isAlertValidAt(time)) {
+                add(copy(extras = emptyList()))
+            }
+            for (extra in extras) {
+                addAll(extra.collectValidAlertsAt(time))
+            }
+        }
+    }
 }
 
-fun AppAlert?.takeOrNull(): AppAlert? {
-    return this?.takeIf { it.content?.isNotBlank() == true }
+fun AppAlert?.takeFirstValidAtOrNull(time: LocalDateTime): AppAlert? {
+    return this?.takeIf { it.collectValidAlertsAt(time).firstOrNull()?.isNotBlank == true }
+}
+
+fun AppAlert?.collectValidAlertsAt(time: LocalDateTime): List<AppAlert> {
+    return this?.collectValidAlertsAt(time)?: emptyList()
 }

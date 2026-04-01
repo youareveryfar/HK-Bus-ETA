@@ -150,10 +150,12 @@ struct TitleView: AppScreenView {
         }
         .padding()
         .onAppear {
-            self.appAlert = AppContextWatchOSKt.getAppAlert(context: appContext)?.takeOrNull()
+            let time = TimeUtilsKt.currentLocalDateTime()
+            self.appAlert = AppContextWatchOSKt.getAppAlert(context: appContext)?.takeFirstValidAtOrNull(time: time)
         }
         .onReceive(alertUpdateTimer) { _ in
-            self.appAlert = AppContextWatchOSKt.getAppAlert(context: appContext)?.takeOrNull()
+            let time = TimeUtilsKt.currentLocalDateTime()
+            self.appAlert = AppContextWatchOSKt.getAppAlert(context: appContext)?.takeFirstValidAtOrNull(time: time)
         }
     }
 }
