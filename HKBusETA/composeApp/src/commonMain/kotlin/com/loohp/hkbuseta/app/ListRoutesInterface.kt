@@ -354,7 +354,7 @@ fun ListRoutesInterface(
     }
 
     val pipMode = rememberIsInPipMode(instance)
-    val appAlert by ComposeShared.rememberAppAlert(instance)
+    val timedAlert by ComposeShared.rememberAppAlert(instance)
 
     var refresh by remember { mutableIntStateOf(0) }
 
@@ -387,7 +387,8 @@ fun ListRoutesInterface(
                         )
                         ComposeShared.AnimatedVisibilityColumnAppAlert(
                             context = instance,
-                            appAlert = appAlert
+                            appAlert = timedAlert?.value,
+                            time = timedAlert?.time
                         )
                     }
                 },

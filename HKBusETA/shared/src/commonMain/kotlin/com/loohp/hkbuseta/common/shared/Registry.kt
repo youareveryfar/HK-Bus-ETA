@@ -3558,7 +3558,7 @@ class Registry {
                                     dest = "Airport & AsiaWorld-Expo"
                                 }
                             }
-                            var special = !route.dest.zh.contains(dest)
+                            var special = route.dest[language].split("/").none { it.trim().lowercase().contains(dest.lowercase()) }
                             var annotatedDest = dest.asFormattedText()
                             if (specialRoute.isNotEmpty() && !isMtrStopOnOrAfter(stopId, specialRoute, lineName, bound)) {
                                 val via = DATA!!.dataSheet.stopList[specialRoute]!!.name[language]

@@ -1121,11 +1121,12 @@ fun FavouriteTrainStationInterface(
     co: Operator,
     extraActions: (@Composable RowScope.() -> Unit)? = null
 ) {
-    val appAlert by ComposeShared.rememberAppAlert(instance)
+    val timedAlert by ComposeShared.rememberAppAlert(instance)
     Column {
         ComposeShared.AnimatedVisibilityColumnAppAlert(
             context = instance,
-            appAlert = appAlert
+            appAlert = timedAlert?.value,
+            time = timedAlert?.time
         )
         when (co) {
             Operator.MTR -> {

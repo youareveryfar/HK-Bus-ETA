@@ -52,6 +52,8 @@ import com.loohp.hkbuseta.appcontext.common
 import com.loohp.hkbuseta.appcontext.composePlatform
 import com.loohp.hkbuseta.common.appcontext.AppActiveContext
 import com.loohp.hkbuseta.common.objects.AppAlert
+import com.loohp.hkbuseta.common.objects.TimedHolder
+import com.loohp.hkbuseta.common.objects.atTime
 import com.loohp.hkbuseta.common.objects.collectValidAlertsAt
 import com.loohp.hkbuseta.common.shared.Registry
 import com.loohp.hkbuseta.common.shared.Shared
@@ -69,16 +71,17 @@ import kotlinx.collections.immutable.ImmutableList
 import kotlinx.collections.immutable.toImmutableList
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.datetime.LocalDateTime
 
 object ComposeShared {
 
-    private val appAlertsState: MutableStateFlow<AppAlert?> = MutableStateFlow(null)
+    private val appAlertsState: MutableStateFlow<TimedHolder<AppAlert>?> = MutableStateFlow(null)
 
     @Composable
-    fun rememberAppAlert(context: AppActiveContext): State<AppAlert?> {
+    fun rememberAppAlert(context: AppActiveContext): State<TimedHolder<AppAlert>?> {
         LaunchedEffect (Unit) {
             while (true) {
-                appAlertsState.value = Registry.getInstance(context).getAppAlerts().await()
+                appAlertsState.value = Registry.getInstance(context).getAppAlerts().await()?.atTime(currentLocalDateTime())
                 delay(30000)
             }
         }
@@ -86,12 +89,12 @@ object ComposeShared {
     }
 
     @Composable
-    fun AnimatedVisibilityColumnAppAlert(context: AppActiveContext, appAlert: AppAlert?, visible: Boolean = true) {
+    fun AnimatedVisibilityColumnAppAlert(context: AppActiveContext, appAlert: AppAlert?, time: LocalDateTime?, visible: Boolean = true) {
         val haptics = LocalHapticFeedback.current
         var validAppAlerts by remember { mutableStateOf(emptyList<AppAlert>()) }
 
-        ImmediateEffect (appAlert) {
-            validAppAlerts = appAlert.collectValidAlertsAt(currentLocalDateTime())
+        ImmediateEffect (appAlert, time) {
+            validAppAlerts = appAlert.collectValidAlertsAt(time?: currentLocalDateTime())
         }
 
         AnimatedVisibility(

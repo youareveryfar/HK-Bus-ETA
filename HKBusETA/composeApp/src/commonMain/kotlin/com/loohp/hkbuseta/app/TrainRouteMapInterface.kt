@@ -301,6 +301,7 @@ import org.jetbrains.compose.resources.InternalResourceApi
 import org.jetbrains.compose.resources.getResourceUri
 import org.jetbrains.compose.resources.painterResource
 import org.jetbrains.compose.resources.readResourceBytes
+import kotlin.time.Duration.Companion.seconds
 
 @Immutable
 data class RouteMapData(
@@ -461,7 +462,7 @@ fun RouteMapSearchInterface(
 
     val mtrLineServiceMessages by remember { derivedStateOf { mtrLineServiceDisruption.asSequence().filter { (_, v) -> v.messages != null }.toImmutableList() } }
 
-    val appAlert by ComposeShared.rememberAppAlert(instance)
+    val timedAlert by ComposeShared.rememberAppAlert(instance)
 
     LaunchedEffect (Unit) {
         notices = Registry.getInstance(instance).getOperatorNotices(setOf(Operator.MTR, Operator.LRT), instance)
@@ -583,7 +584,12 @@ fun RouteMapSearchInterface(
         ) {
             if (visible || (pagerState.currentPage == 0 && mtrRouteMapLoaded.value) || (pagerState.currentPage == 1 && lightRailRouteMapLoaded.value) || pagerState.currentPage == 2) {
                 Column {
-                    ComposeShared.AnimatedVisibilityColumnAppAlert(instance, appAlert, pagerState.currentPage.let { it == 0 || it == 1 })
+                    ComposeShared.AnimatedVisibilityColumnAppAlert(
+                        context = instance,
+                        appAlert = timedAlert?.value,
+                        time = timedAlert?.time,
+                        visible = pagerState.currentPage.let { it == 0 || it == 1 }
+                    )
                     HorizontalPager(
                         modifier = Modifier.fillMaxSize(),
                         state = pagerState,

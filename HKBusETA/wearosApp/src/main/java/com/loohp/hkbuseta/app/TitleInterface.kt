@@ -38,8 +38,8 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Star
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.derivedStateOf
 import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -275,10 +275,12 @@ fun FavButton(instance: AppActiveContext) {
 @Composable
 fun BottomText(instance: AppActiveContext) {
     val haptic = LocalHapticFeedback.current
-    val appAlert by WearOSShared.rememberAppAlert(instance)
-    val now by remember(appAlert) { mutableStateOf(currentLocalDateTime()) }
+    val timedAlert by WearOSShared.rememberAppAlert(instance)
+    val validFirstAppAlert by remember(timedAlert) { derivedStateOf {
+        timedAlert?.value?.takeFirstValidAtOrNull(timedAlert?.time?: currentLocalDateTime())
+    } }
 
-    appAlert?.takeFirstValidAtOrNull(now)?.let { alert ->
+    validFirstAppAlert?.let { alert ->
         AutoResizeText(
             modifier = Modifier
                 .padding(30.dp, 0.dp)
