@@ -3324,7 +3324,7 @@ class Registry {
             val hongKongTime = Clock.System.now().toLocalDateTime(hongKongTimeZone)
             val hour = hongKongTime.hour
             val results: MutableList<LrtETAData> = mutableListOf()
-            val data = getJSONResponse<JsonObject>("https://rt.data.gov.hk/v1/transport/mtr/lrt/getSchedule?station_id=${stopId.substring(2)}")
+            val data = getJSONResponse<JsonObject>("https://rt.data.gov.hk/v1/transport/mtr/lrt/getSchedule?with_special=1&station_id=${stopId.substring(2)}")
             if (data!!.optInt("status") != 0) {
                 val platformList = data.optJsonArray("platform_list")!!
                 if (!lrtAllMode) {
@@ -3336,7 +3336,11 @@ class Registry {
                         if (routeList != null) {
                             for (u in 0 until routeList.size) {
                                 val routeData = routeList.optJsonObject(u)!!
-                                val routeNumber = routeData.optString("route_no")
+                                val lrtSpecial = routeData.optInt("special") > 0
+                                val routeNumber = routeData
+                                    .optString(if (lrtSpecial) "additionalInfo1" else "route_no")
+                                    .let { if (it == "SPR") (if (language == "en") "Special" else "特別車") else it }
+                                val remark = routeData.optString(if (language == "en") "routeRemarkEng2" else "routeRemarkChi2")
                                 if (routeData.contains("time_ch")) {
                                     val destCh = routeData.optString("dest_ch")
                                     if (matchRoutes.any { routeNumber == it.routeNumber && isLrtStopOnOrAfter(stopId, destCh, it) }) {
@@ -3344,11 +3348,11 @@ class Registry {
                                         val minsMsg = routeData.optString(if (language == "en") "time_en" else "time_ch")
                                         val dest = routeData.optString(if (language == "en") "dest_en" else "dest_ch")
                                         val trainLength = routeData.optInt("train_length")
-                                        results.add(LrtETAData(routeNumber, dest, trainLength, platformNumber, mins, minsMsg))
+                                        results.add(LrtETAData(routeNumber, dest, trainLength, platformNumber, mins, minsMsg, remark))
                                     }
                                 } else if (results.none { it.routeNumber == routeNumber } && matchRoutes.any { routeNumber == it.routeNumber }) {
                                     val message = if (language == "en") "Server unable to provide data" else "系統未能提供資訊"
-                                    results.add(LrtETAData(routeNumber, "", 0, platformNumber, Long.MAX_VALUE, message))
+                                    results.add(LrtETAData(routeNumber, "", 0, platformNumber, Long.MAX_VALUE, message, remark))
                                 }
                             }
                         }
@@ -3361,16 +3365,20 @@ class Registry {
                         if (routeList != null) {
                             for (u in 0 until routeList.size) {
                                 val routeData = routeList.optJsonObject(u)!!
-                                val routeNumber = routeData.optString("route_no")
+                                val lrtSpecial = routeData.optInt("special") > 0
+                                val routeNumber = routeData
+                                    .optString(if (lrtSpecial) "additionalInfo1" else "route_no")
+                                    .let { if (it == "SPR") (if (language == "en") "Special" else "特別車") else it }
+                                val remark = routeData.optString(if (language == "en") "routeRemarkEng2" else "routeRemarkChi2")
                                 if (routeData.contains("time_ch")) {
                                     val mins = "([0-9]+) *min".toRegex().find(routeData.optString("time_en"))?.groupValues?.getOrNull(1)?.toLong()?: 0
                                     val minsMsg = routeData.optString(if (language == "en") "time_en" else "time_ch")
                                     val dest = routeData.optString(if (language == "en") "dest_en" else "dest_ch")
                                     val trainLength = routeData.optInt("train_length")
-                                    results.add(LrtETAData(routeNumber, dest, trainLength, platformNumber, mins, minsMsg))
+                                    results.add(LrtETAData(routeNumber, dest, trainLength, platformNumber, mins, minsMsg, remark))
                                 } else if (results.none { it.routeNumber == routeNumber }) {
                                     val message = if (language == "en") "Server unable to provide data" else "系統未能提供資訊"
-                                    results.add(LrtETAData(routeNumber, "", 0, platformNumber, Long.MAX_VALUE, message))
+                                    results.add(LrtETAData(routeNumber, "", 0, platformNumber, Long.MAX_VALUE, message, remark))
                                 }
                             }
                         }
@@ -3434,7 +3442,7 @@ class Registry {
                                 append(EMSP)
                             },
                             time = annotatedMinsMessage,
-                            remark = "".asFormattedText()
+                            remark = lrt.routeRemark.asFormattedText()
                         )
                         lrtAllMode -> ETALineEntryText.lrt(
                             platform = buildFormattedString {
@@ -3458,7 +3466,7 @@ class Registry {
                                 append(EMSP)
                             },
                             time = annotatedMinsMessage,
-                            remark = "".asFormattedText()
+                            remark = lrt.routeRemark.asFormattedText()
                         )
                         else -> ETALineEntryText.lrt(
                             platform = buildFormattedString {
@@ -3476,7 +3484,7 @@ class Registry {
                                 append("  ")
                             },
                             time = annotatedMinsMessage,
-                            remark = "".asFormattedText()
+                            remark = lrt.routeRemark.asFormattedText()
                         )
                     }
                     lines[seq] = ETALineEntry.etaEntry(message, toShortText(language, mins, 1), lrt.platformNumber, lrt.routeNumber, mins.toDouble(), mins)
@@ -3887,7 +3895,8 @@ class Registry {
         val trainLength: Int,
         val platformNumber: Int,
         val eta: Long,
-        val etaMessage: String
+        val etaMessage: String,
+        val routeRemark: String
     ) : Comparable<LrtETAData> {
 
         companion object {

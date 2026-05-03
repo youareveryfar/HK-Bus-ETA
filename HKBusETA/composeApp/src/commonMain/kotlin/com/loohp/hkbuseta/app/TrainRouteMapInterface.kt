@@ -201,10 +201,12 @@ import com.loohp.hkbuseta.common.utils.FormattedText
 import com.loohp.hkbuseta.common.utils.IO
 import com.loohp.hkbuseta.common.utils.Immutable
 import com.loohp.hkbuseta.common.utils.LocationPriority
+import com.loohp.hkbuseta.common.utils.SmallSize
 import com.loohp.hkbuseta.common.utils.asFormattedText
 import com.loohp.hkbuseta.common.utils.asImmutableList
 import com.loohp.hkbuseta.common.utils.asImmutableMap
 import com.loohp.hkbuseta.common.utils.awaitWithTimeout
+import com.loohp.hkbuseta.common.utils.buildFormattedString
 import com.loohp.hkbuseta.common.utils.currentTimeMillis
 import com.loohp.hkbuseta.common.utils.editDistance
 import com.loohp.hkbuseta.common.utils.getCircledNumber
@@ -301,7 +303,6 @@ import org.jetbrains.compose.resources.InternalResourceApi
 import org.jetbrains.compose.resources.getResourceUri
 import org.jetbrains.compose.resources.painterResource
 import org.jetbrains.compose.resources.readResourceBytes
-import kotlin.time.Duration.Companion.seconds
 
 @Immutable
 data class RouteMapData(
@@ -2525,7 +2526,9 @@ fun LRTETADisplayByRouteInterface(
                         verticalAlignment = Alignment.CenterVertically,
                         horizontalArrangement = Arrangement.spacedBy(3.dp, Alignment.Start)
                     ) {
-                        val size = "614P".renderedSize(19.sp)
+                        val sizes = routeSorted.keys.map { it.renderedSize(19.sp) }
+                        val maxWidth = sizes.maxOf { it.size.width }.equivalentDp
+                        val maxHeight = sizes.maxOf { it.size.height }.equivalentDp
                         PlatformText(
                             text = if (Shared.language == "en") "Route" else "路線",
                             fontSize = 21.sp
@@ -2533,13 +2536,13 @@ fun LRTETADisplayByRouteInterface(
                         Box(
                             modifier = Modifier
                                 .requiredSize(
-                                    width = size.size.width.equivalentDp + 10.sp.dp,
-                                    height = size.size.height.equivalentDp + 3.sp.dp,
+                                    width = maxWidth + 10.sp.dp,
+                                    height = maxHeight + 3.sp.dp,
                                 )
                                 .border(
                                     width = 3.sp.dp,
-                                    color = Operator.LRT.getLineColor(routeNumber, Color.Unspecified),
-                                    shape = RoundedCornerShape(size.size.width.equivalentDp)
+                                    color = Operator.LRT.getLineColor(routeNumber, Color.DarkGray),
+                                    shape = RoundedCornerShape(maxWidth)
                                 ),
                             contentAlignment = Alignment.Center
                         ) {
@@ -3151,7 +3154,18 @@ fun TrainETADisplay(
                 TrainEtaText(entry.operator, freshness)
             }
             if (hasRemark) {
-                TrainEtaText(entry.remark, freshness)
+                TrainEtaText(
+                    text = buildFormattedString {
+                        if (entry.remark.isBlank()) {
+                            append(entry.remark)
+                        } else {
+                            append(" (", SmallSize)
+                            append(entry.remark, SmallSize)
+                            append(")", SmallSize)
+                        }
+                    },
+                    freshness = freshness
+                )
             }
         }
     }
