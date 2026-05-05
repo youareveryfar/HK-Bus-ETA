@@ -284,7 +284,9 @@ fun StopMarkers(
         var selectedSection by selectedSectionState
         for ((i, stop) in waypoints.stops.withIndex()) {
             val stopIndex = { indexMap[i] + 1 }.logPossibleStopMarkerIndexMapException(instance, waypoints)?: continue
-            val title = (alternateStopNames.value?.takeIf { alternateStopNameShowing }?.getOrNull(stopIndex - 1)?.stop?: stop).name[Shared.language]
+            val resolvedStop = alternateStopNames.value?.takeIf { alternateStopNameShowing }?.getOrNull(i)?.stop?: stop
+            val title = resolvedStop.name[Shared.language]
+            val remark = resolvedStop.remark?.get(Shared.language)
             val markerState = rememberStopMarkerState(stop)
             ChangedEffect (selectedSection, selectedStop) {
                 if (selectedSection == sectionIndex && selectedStop == stopIndex) {
@@ -294,7 +296,7 @@ fun StopMarkers(
             Marker(
                 state = markerState,
                 title = if (shouldShowStopIndex) "${stopIndex}. $title" else title,
-                snippet = stop.remark?.get(Shared.language),
+                snippet = remark,
                 icon = BitmapDescriptorFactory.fromBitmap(icon),
                 anchor = anchor,
                 onClick = {
