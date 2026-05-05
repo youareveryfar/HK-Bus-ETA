@@ -120,6 +120,7 @@ import com.loohp.hkbuseta.common.utils.currentBranchStatus
 import com.loohp.hkbuseta.common.utils.currentEpochSeconds
 import com.loohp.hkbuseta.common.utils.currentLocalDateTime
 import com.loohp.hkbuseta.common.utils.currentTimeMillis
+import com.loohp.hkbuseta.common.utils.debugLog
 import com.loohp.hkbuseta.common.utils.decodeFromStringReadChannel
 import com.loohp.hkbuseta.common.utils.doRetry
 import com.loohp.hkbuseta.common.utils.editDistance
@@ -3163,6 +3164,7 @@ class Registry {
     )
 
     private suspend fun etaQueryGmb(typhoonInfo: TyphoonInfo, stopId: String, stopIndex: Int, co: Operator, route: Route, options: EtaQueryOptions?, context: AppContext): ETAQueryResult {
+        val byGtfs = DATA!!.dataSheet.routeKeysByGtfsId.getCompletedOrNull()?: DATA!!.dataSheet.routeList.asSequence().groupBy({ it.value.gtfsId }, { it.key })
         val allBranches = getAllBranchRoutes(route.routeNumber, route.idBound(Operator.GMB), Operator.GMB, route.gmbRegion)
         val specialBranchRemarks = allBranches.associateWith { lazy { it.resolveSpecialRemark(context, RemarkType.LABEL_MAIN_BRANCH) } }
         val allStops = getAllStops(route.routeNumber, route.idBound(Operator.GMB), Operator.GMB, route.gmbRegion)
@@ -3205,6 +3207,26 @@ class Registry {
                     }
                 }
             }
+        }
+        for ((r, s) in stopSequences) {
+            val stopIndexes = byGtfs[r]?.asSequence()
+                ?.mapNotNull { DATA!!.dataSheet.routeList[it]?.stops?.get(Operator.GMB)?.indexesOf(stopId) }
+                ?.maxBy { it.size }
+                ?: continue
+            if (s.size < stopIndexes.size) {
+                val existingStopIndexes = s.toList()
+                val newStopIndexes = stopIndexes.toMutableList()
+                s.clear()
+                for (i in existingStopIndexes) {
+                    val closest = newStopIndexes.minByOrNull { (it - i).absoluteValue }
+                    if (closest != null) {
+                        newStopIndexes.remove(closest)
+                    }
+                    s.add(i)
+                }
+                s.addAll(newStopIndexes)
+            }
+            debugLog("$stopIndexes | $s")
         }
         for ((r, s) in stopSequences) {
             if (s.size > 1) {

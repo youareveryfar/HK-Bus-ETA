@@ -103,6 +103,7 @@ class DataSheet(
     private val routeKeysByTask = CoroutineScope(Dispatchers.IO).async {
         val byStopId = mutableMapOf<String, MutableSet<Pair<String, Int>>>()
         val byRouteNumber = mutableMapOf<String, MutableSet<String>>()
+        val byGtfsId = mutableMapOf<String, MutableSet<String>>()
         for ((key, route) in routeList) {
             for (stopIds in route.stops.values) {
                 for ((index, stopId) in stopIds.withIndex()) {
@@ -110,10 +111,12 @@ class DataSheet(
                 }
             }
             byRouteNumber.getOrPut(route.routeNumber) { HashSet() }.add(key)
+            byGtfsId.getOrPut(route.gtfsId) { HashSet() }.add(key)
         }
         RouteKeysByTaskResult(
             byStopId = byStopId,
-            byRouteNumber = byRouteNumber
+            byRouteNumber = byRouteNumber,
+            byGtfsId = byGtfsId
         )
     }
 
@@ -121,6 +124,8 @@ class DataSheet(
     val routeKeysByStopId: Deferred<Map<String, Set<Pair<String, Int>>>> = routeKeysByTask.then { byStopId }
     @Transient
     val routeKeysByRouteNumber: Deferred<Map<String, Set<String>>> = routeKeysByTask.then { byRouteNumber }
+    @Transient
+    val routeKeysByGtfsId: Deferred<Map<String, Set<String>>> = routeKeysByTask.then { byGtfsId }
 
     override fun equals(other: Any?): Boolean {
         if (this === other) return true
@@ -146,5 +151,6 @@ class DataSheet(
 
 private data class RouteKeysByTaskResult(
     val byStopId: Map<String, MutableSet<Pair<String, Int>>>,
-    val byRouteNumber: Map<String, MutableSet<String>>
+    val byRouteNumber: Map<String, MutableSet<String>>,
+    val byGtfsId: Map<String, MutableSet<String>>
 )

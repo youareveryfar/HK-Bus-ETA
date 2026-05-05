@@ -1381,6 +1381,7 @@ fun MTRRouteMapETAInterface(
                                 stopId = stopId,
                                 co = Operator.MTR,
                                 freshness = freshness,
+                                remarkOnNextLine = false,
                                 instance = instance
                             )
                         }
@@ -2428,6 +2429,7 @@ fun LRTETADisplayByPlatformInterface(
                         stopId = stopId,
                         co = Operator.LRT,
                         freshness = freshness,
+                        remarkOnNextLine = true,
                         instance = instance
                     )
                 }
@@ -2568,6 +2570,7 @@ fun LRTETADisplayByRouteInterface(
                         stopId = stopId,
                         co = Operator.LRT,
                         freshness = freshness,
+                        remarkOnNextLine = true,
                         instance = instance
                     )
                 }
@@ -3045,6 +3048,7 @@ fun TrainETADisplay(
     stopId: String,
     co: Operator,
     freshness: Boolean,
+    remarkOnNextLine: Boolean,
     instance: AppActiveContext
 ) {
     val scope = rememberCoroutineScope()
@@ -3057,12 +3061,13 @@ fun TrainETADisplay(
     val hasClockTime by remember(resolvedText) { derivedStateOf { resolvedText.any { it.value.clockTime.isNotEmpty() } } }
     val hasTime by remember(resolvedText) { derivedStateOf { resolvedText.any { it.value.time.isNotEmpty() } } }
     val hasOperator by remember(resolvedText) { derivedStateOf { resolvedText.any { it.value.operator.isNotEmpty() } } }
-    val hasRemark by remember(resolvedText) { derivedStateOf { resolvedText.any { it.value.remark.isNotEmpty() } } }
+    val hasRemark by remember(resolvedText) { derivedStateOf { true || resolvedText.any { it.value.remark.isNotEmpty() } } }
 
     val columns by remember(resolvedText) { derivedStateOf { buildList {
         if (hasPlatform) add(TableColumn(width = TableColumnWidth.Wrap))
         if (hasRouteNumber) add(TableColumn(width = TableColumnWidth.Wrap))
         if (hasDestination) add(TableColumn(width = TableColumnWidth.Weight(1F)))
+        if (hasRemark && !remarkOnNextLine) add(TableColumn(width = TableColumnWidth.Weight(1F)))
         if (hasCarts) add(TableColumn(width = TableColumnWidth.Wrap))
         if (hasClockTime) add(TableColumn(width = TableColumnWidth.Wrap, alignment = Alignment.End))
         if (hasTime) add(TableColumn(
@@ -3070,7 +3075,6 @@ fun TrainETADisplay(
             alignment = if (lines.first().platform <= 0) Alignment.Start else Alignment.End
         ))
         if (hasOperator) add(TableColumn(width = TableColumnWidth.Wrap))
-        if (hasRemark) add(TableColumn(width = TableColumnWidth.Weight(1F)))
     } } }
 
     val minHeight = 28F.fontScaledDp(0.5F)
@@ -3115,6 +3119,16 @@ fun TrainETADisplay(
                         )
                     }
                 },
+                remark = entry.remark.takeIf { remarkOnNextLine && it.isNotBlank() }?.let { {
+                    TrainEtaText(
+                        text = buildFormattedString {
+                            append("(", SmallSize)
+                            append(entry.remark, SmallSize)
+                            append(")", SmallSize)
+                        },
+                        freshness = freshness
+                    )
+                } },
                 horizontalExtension = 5.dp,
                 alignment = TableRowAlignment.Baseline(FirstBaseline),
                 minHeight = minHeight
@@ -3141,6 +3155,20 @@ fun TrainETADisplay(
             if (hasDestination) {
                 TrainEtaText(entry.destination, freshness)
             }
+            if (hasRemark && !remarkOnNextLine) {
+                TrainEtaText(
+                    text = buildFormattedString {
+                        if (entry.remark.isBlank()) {
+                            append("")
+                        } else {
+                            append("(", SmallSize)
+                            append(entry.remark, SmallSize)
+                            append(")", SmallSize)
+                        }
+                    },
+                    freshness = freshness
+                )
+            }
             if (hasCarts) {
                 TrainEtaText(entry.carts, freshness)
             }
@@ -3152,20 +3180,6 @@ fun TrainETADisplay(
             }
             if (hasOperator) {
                 TrainEtaText(entry.operator, freshness)
-            }
-            if (hasRemark) {
-                TrainEtaText(
-                    text = buildFormattedString {
-                        if (entry.remark.isBlank()) {
-                            append(entry.remark)
-                        } else {
-                            append(" (", SmallSize)
-                            append(entry.remark, SmallSize)
-                            append(")", SmallSize)
-                        }
-                    },
-                    freshness = freshness
-                )
             }
         }
     }
