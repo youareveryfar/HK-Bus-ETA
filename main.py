@@ -474,6 +474,18 @@ def download_and_process_data_sheet():
     DATA_SHEET["routeList"]["706+1+Tin Shui Wai+Tin Shui Wai (Circular)"]["stops"]["lightRail"].append(lrt_706_start)
     DATA_SHEET["routeList"]["706+1+Tin Shui Wai+Tin Shui Wai (Circular)"]["lrtCircular"] = {"en": "TSW Circular", "zh": "天水圍循環綫"}
 
+    DATA_SHEET["routeList"]["751*+1+Tin Yat+Tuen Mun Ferry Pier"] = DATA_SHEET["routeList"]["903+1+Tin Yat+Tuen Mun Ferry Pier"]
+    DATA_SHEET["routeList"]["751*+1+Tin Yat+Tuen Mun Ferry Pier"]["route"] = "751*"
+
+    DATA_SHEET["routeList"]["506P+1+Tuen Mun Ferry Pier+Siu Hong"] = DATA_SHEET["routeList"]["905+1+Tuen Mun Ferry Pier+Siu Hong"]
+    DATA_SHEET["routeList"]["506P+1+Tuen Mun Ferry Pier+Siu Hong"]["route"] = "506P"
+
+    del DATA_SHEET["routeList"]["901+1+Tin Yat+Tuen Mun Ferry Pier"]
+    del DATA_SHEET["routeList"]["902+1+Tin Yat+Tuen Mun Ferry Pier"]
+    del DATA_SHEET["routeList"]["903+1+Tin Yat+Tuen Mun Ferry Pier"]
+    del DATA_SHEET["routeList"]["904+1+Tuen Mun Ferry Pier+Tin Shui Wai"]
+    del DATA_SHEET["routeList"]["905+1+Tuen Mun Ferry Pier+Siu Hong"]
+
     if "HK1+1+STAR FERRY+[KMB Tour HK] TSIM SHA TSUI, MONG KOK and WONG TAI" in DATA_SHEET["routeList"]:
         DATA_SHEET["routeList"]["HK1+1+STAR FERRY+[KMB Tour HK] TSIM SHA TSUI, MONG KOK and WONG TAI"]["dest"]["zh"] = "尖沙咀, 旺角及黃大仙 [九巴遊香港]"
         DATA_SHEET["routeList"]["HK1+1+STAR FERRY+[KMB Tour HK] TSIM SHA TSUI, MONG KOK and WONG TAI"]["dest"]["en"] = "Tsim Sha Tsui, Mong Kok and Wong Tai Sin [KMB Tour HK]"
@@ -1252,6 +1264,20 @@ def add_route_remarks():
         }
     }
     nlb = {}
+    lrt = {
+        "751P": {
+            "zh": "特別路線",
+            "en": "Special Route"
+        },
+        "751*": {
+            "zh": "到河田後改行507綫往屯門碼頭",
+            "en": "Change to Route 507 at Ho Tin to Tuen Mun Ferry Pier"
+        },
+        "506P": {
+            "zh": "特別路線",
+            "en": "Special Route"
+        }
+    }
 
     kmb_routes_data_with_timetables = {}
     ctb_routes_data_with_timetables = {}
@@ -1405,6 +1431,7 @@ def add_route_remarks():
     ROUTE_REMARKS["kmb"] = kmb
     ROUTE_REMARKS["ctb"] = ctb
     ROUTE_REMARKS["nlb"] = nlb
+    ROUTE_REMARKS["lrt"] = lrt
 
     for route_number, operator_data in MISSING_ROUTES.items():
         for co, data in operator_data.items():
