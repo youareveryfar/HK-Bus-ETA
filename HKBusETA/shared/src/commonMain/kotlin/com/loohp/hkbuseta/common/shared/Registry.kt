@@ -3226,7 +3226,6 @@ class Registry {
                 }
                 s.addAll(newStopIndexes)
             }
-            debugLog("$stopIndexes | $s")
         }
         for ((r, s) in stopSequences) {
             if (s.size > 1) {
@@ -3363,6 +3362,7 @@ class Registry {
                                     .optString(if (lrtSpecial) "additionalInfo1" else "route_no")
                                     .let { if (it == "SPR") (if (language == "en") "Special" else "特別車") else it }
                                 val remark = routeData.optString(if (language == "en") "routeRemarkEng2" else "routeRemarkChi2")
+                                val internalRouteNumber = routeData.optString("route_no")
                                 if (routeData.contains("time_ch")) {
                                     val destCh = routeData.optString("dest_ch")
                                     if (matchRoutes.any { routeNumber == it.routeNumber && isLrtStopOnOrAfter(stopId, destCh, it) }) {
@@ -3370,11 +3370,11 @@ class Registry {
                                         val minsMsg = routeData.optString(if (language == "en") "time_en" else "time_ch")
                                         val dest = routeData.optString(if (language == "en") "dest_en" else "dest_ch")
                                         val trainLength = routeData.optInt("train_length")
-                                        results.add(LrtETAData(routeNumber, dest, trainLength, platformNumber, mins, minsMsg, remark))
+                                        results.add(LrtETAData(routeNumber, dest, trainLength, platformNumber, mins, minsMsg, remark, internalRouteNumber))
                                     }
                                 } else if (results.none { it.routeNumber == routeNumber } && matchRoutes.any { routeNumber == it.routeNumber }) {
                                     val message = if (language == "en") "Server unable to provide data" else "系統未能提供資訊"
-                                    results.add(LrtETAData(routeNumber, "", 0, platformNumber, Long.MAX_VALUE, message, remark))
+                                    results.add(LrtETAData(routeNumber, "", 0, platformNumber, Long.MAX_VALUE, message, remark, internalRouteNumber))
                                 }
                             }
                         }
@@ -3392,15 +3392,16 @@ class Registry {
                                     .optString(if (lrtSpecial) "additionalInfo1" else "route_no")
                                     .let { if (it == "SPR") (if (language == "en") "Special" else "特別車") else it }
                                 val remark = routeData.optString(if (language == "en") "routeRemarkEng2" else "routeRemarkChi2")
+                                val internalRouteNumber = routeData.optString("route_no")
                                 if (routeData.contains("time_ch")) {
                                     val mins = "([0-9]+) *min".toRegex().find(routeData.optString("time_en"))?.groupValues?.getOrNull(1)?.toLong()?: 0
                                     val minsMsg = routeData.optString(if (language == "en") "time_en" else "time_ch")
                                     val dest = routeData.optString(if (language == "en") "dest_en" else "dest_ch")
                                     val trainLength = routeData.optInt("train_length")
-                                    results.add(LrtETAData(routeNumber, dest, trainLength, platformNumber, mins, minsMsg, remark))
+                                    results.add(LrtETAData(routeNumber, dest, trainLength, platformNumber, mins, minsMsg, remark, internalRouteNumber))
                                 } else if (results.none { it.routeNumber == routeNumber }) {
                                     val message = if (language == "en") "Server unable to provide data" else "系統未能提供資訊"
-                                    results.add(LrtETAData(routeNumber, "", 0, platformNumber, Long.MAX_VALUE, message, remark))
+                                    results.add(LrtETAData(routeNumber, "", 0, platformNumber, Long.MAX_VALUE, message, remark, internalRouteNumber))
                                 }
                             }
                         }
@@ -3918,7 +3919,8 @@ class Registry {
         val platformNumber: Int,
         val eta: Long,
         val etaMessage: String,
-        val routeRemark: String
+        val routeRemark: String,
+        val internalRouteNumber: String,
     ) : Comparable<LrtETAData> {
 
         companion object {
@@ -4058,7 +4060,8 @@ class Registry {
         val platform: Int,
         val routeNumber: String,
         val eta: Double,
-        val etaRounded: Long
+        val etaRounded: Long,
+        val internalRouteNumber: String = routeNumber
     ) {
 
         companion object {
@@ -4077,11 +4080,11 @@ class Registry {
                 return etaEntry(text, shortText, -1, routeNumber, eta, etaRounded)
             }
 
-            fun etaEntry(text: ETALineEntryText, shortText: ETAShortText, platform: Int, routeNumber: String, eta: Double, etaRounded: Long): ETALineEntry {
+            fun etaEntry(text: ETALineEntryText, shortText: ETAShortText, platform: Int, routeNumber: String, eta: Double, etaRounded: Long, internalRouteNumber: String = routeNumber): ETALineEntry {
                 return if (etaRounded > -60) {
-                    ETALineEntry(text, shortText, platform, routeNumber, eta.coerceAtLeast(0.0), etaRounded.coerceAtLeast(0))
+                    ETALineEntry(text, shortText, platform, routeNumber, eta.coerceAtLeast(0.0), etaRounded.coerceAtLeast(0), routeNumber)
                 } else {
-                    ETALineEntry(text, shortText, platform, routeNumber, -1.0, -1)
+                    ETALineEntry(text, shortText, platform, routeNumber, -1.0, -1, routeNumber)
                 }
             }
         }
@@ -4095,7 +4098,8 @@ class Registry {
             if (platform != other.platform) return false
             if (routeNumber != other.routeNumber) return false
             if (eta != other.eta) return false
-            return etaRounded == other.etaRounded
+            if (etaRounded != other.etaRounded) return false
+            return internalRouteNumber == other.internalRouteNumber
         }
 
         override fun hashCode(): Int {
@@ -4105,6 +4109,7 @@ class Registry {
             result = 31 * result + routeNumber.hashCode()
             result = 31 * result + eta.hashCode()
             result = 31 * result + etaRounded.hashCode()
+            result = 31 * result + internalRouteNumber.hashCode()
             return result
         }
     }

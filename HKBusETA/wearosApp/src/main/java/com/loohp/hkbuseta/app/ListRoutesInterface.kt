@@ -120,6 +120,7 @@ import com.loohp.hkbuseta.common.objects.identifyStopCo
 import com.loohp.hkbuseta.common.objects.isCircular
 import com.loohp.hkbuseta.common.objects.isFerry
 import com.loohp.hkbuseta.common.objects.next
+import com.loohp.hkbuseta.common.objects.requireSmallerFontForRouteDisplay
 import com.loohp.hkbuseta.common.objects.resolvedDestFormatted
 import com.loohp.hkbuseta.common.objects.shouldPrependTo
 import com.loohp.hkbuseta.common.objects.uniqueKey
@@ -613,30 +614,31 @@ fun LazyItemScope.RouteRow(
 
     val co = route.co
     val kmbCtbJoint = route.route!!.isKmbCtbJoint
-    val routeNumber = co.getListDisplayRouteNumber(route.route!!.routeNumber, true)
+    val routeNumber = route.route!!.routeNumber
+    val routeNumberDisplay = co.getListDisplayRouteNumber(routeNumber, true)
     val gmbRegion = route.route!!.gmbRegion
     val routeTextWidth = if (Shared.language != "en" && co == Operator.MTR) mtrTextWidth else defaultTextWidth
     val rawColor = co.getColor(route.route!!.routeNumber, Color.White)
     val dest = route.resolvedDestFormatted(false, instance)[Shared.language]
     val operatorName = remember(route, co, kmbCtbJoint) { co.getDisplayFormattedName(route.route!!.routeNumber, kmbCtbJoint, gmbRegion, Shared.language).asContentAnnotatedString().annotatedString }
 
-    val secondLine = remember(route, co, kmbCtbJoint, routeNumber, rawColor, listType) { buildImmutableList {
+    val secondLine = remember(route, co, kmbCtbJoint, routeNumberDisplay, rawColor, listType) { buildImmutableList {
         if (listType == RouteListType.RECENT) {
             add(instance.formatDateTime((Shared.findLookupRouteTime(route.routeKey)?: 0).toLocalDateTime(), true).asAnnotatedString())
         }
         if (route.stopInfo != null && mtrSearch.isNullOrEmpty()) {
             val stopName = if (kmbCtbJoint && alternateStopNamesShowing) {
-                Registry.getInstance(instance).findJointAlternateStop(route.stopInfo!!.stopId, routeNumber).stop.name
+                Registry.getInstance(instance).findJointAlternateStop(route.stopInfo!!.stopId, routeNumberDisplay).stop.name
             } else {
                 route.stopInfo!!.data!!.name
             }
             add(stopName[Shared.language].asAnnotatedString())
         }
-        if (co == Operator.NLB || co.isFerry || (showCircularOrigin && route.route!!.isCircular && co != Operator.CTB)) {
+        if (co == Operator.NLB || co.isFerry || (showCircularOrigin && route.route!!.isCircular && co != Operator.CTB && co != Operator.LRT)) {
             add((if (Shared.language == "en") "From ".plus(route.route!!.orig.en) else "從".plus(route.route!!.orig.zh).plus("開出")).asAnnotatedString(SpanStyle(color = rawColor.adjustBrightness(0.75F))))
         }
-        if (co == Operator.KMB && routeNumber.getKMBSubsidiary() == KMBSubsidiary.SUNB) {
-            add((if (Shared.language == "en") "Sun Bus (NR$routeNumber)" else "陽光巴士 (NR$routeNumber)").asAnnotatedString(SpanStyle(color = rawColor.adjustBrightness(0.75F))))
+        if (co == Operator.KMB && routeNumberDisplay.getKMBSubsidiary() == KMBSubsidiary.SUNB) {
+            add((if (Shared.language == "en") "Sun Bus (NR$routeNumberDisplay)" else "陽光巴士 (NR$routeNumberDisplay)").asAnnotatedString(SpanStyle(color = rawColor.adjustBrightness(0.75F))))
         }
         co.getRouteRemarks(instance, routeNumber)?.let {
             add(it[Shared.language].asAnnotatedString(SpanStyle(color = rawColor.adjustBrightness(0.75F))))
@@ -685,6 +687,7 @@ fun LazyItemScope.RouteRow(
                 kmbCtbJoint = kmbCtbJoint,
                 routeTextWidth = routeTextWidth,
                 routeNumber = routeNumber,
+                routeNumberDisplay = routeNumberDisplay,
                 operatorName = operatorName,
                 secondLine = secondLine,
                 dest = dest,
@@ -711,6 +714,7 @@ fun RowScope.RouteRowText(
     kmbCtbJoint: Boolean,
     routeTextWidth: Float,
     routeNumber: String,
+    routeNumberDisplay: String,
     operatorName: AnnotatedString,
     secondLine: ImmutableList<AnnotatedString>,
     dest: FormattedText,
@@ -724,14 +728,14 @@ fun RowScope.RouteRowText(
         DrawPhaseColorText(
             modifier = Modifier.requiredWidth(routeTextWidth.dp),
             textAlign = TextAlign.Start,
-            fontSize = if (co == Operator.MTR && Shared.language != "en") {
+            fontSize = if (co.requireSmallerFontForRouteDisplay(routeNumber)) {
                 16F.scaledSize(instance).sp.clamp(max = 19F.scaledSize(instance).dp)
             } else {
                 20F.scaledSize(instance).sp.clamp(max = 23F.scaledSize(instance).dp)
             },
             color = { color },
             maxLines = 1,
-            text = routeNumber
+            text = routeNumberDisplay
         )
         DrawPhaseColorText(
             textAlign = TextAlign.Start,
