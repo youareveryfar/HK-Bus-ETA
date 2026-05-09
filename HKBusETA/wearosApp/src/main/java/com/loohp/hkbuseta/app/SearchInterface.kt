@@ -214,6 +214,9 @@ fun SearchMainElement(instance: AppActiveContext) {
                             KeyboardButton(instance, alphabet, state)
                         }
                     }
+                    if (possibleValues.contains('*')) {
+                        KeyboardButton(instance, '*', state)
+                    }
                 }
             }
         }

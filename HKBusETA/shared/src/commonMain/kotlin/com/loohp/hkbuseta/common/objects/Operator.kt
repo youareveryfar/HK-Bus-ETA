@@ -75,7 +75,7 @@ class Operator private constructor(
         }
 
         fun values(): Array<Operator> {
-            return VALUES.values.toTypedArray().apply { sort() }
+            return VALUES.synchronize { VALUES.values.toTypedArray() }.apply { sort() }
         }
     }
 

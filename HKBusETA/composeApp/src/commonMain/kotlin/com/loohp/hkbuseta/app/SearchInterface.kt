@@ -488,6 +488,11 @@ fun SearchInterface(instance: AppActiveContext, visible: Boolean, isChangingPage
                                     }
                                 }
                             }
+                            if (possibleValues.contains('*')) {
+                                Box(modifier = Modifier.heightIn(max = keyHeight.equivalentDp * 0.95F)) {
+                                    KeyboardButton(instance, '*', onClick)
+                                }
+                            }
                         }
                     }
                 }
