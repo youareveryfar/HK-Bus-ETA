@@ -59,6 +59,9 @@ import kotlin.math.max
 val bilingualToPrefix = "往" withEn "To "
 val bilingualOnlyToPrefix = "只往" withEn "To "
 
+val bilingualLrtSpecial = "特別車" withEn "Special"
+val bilingualLrtSpecialShortened = "特別車" withEn "SPR"
+
 inline val Route.endOfLineText: BilingualText get() {
     val co = co.firstCo()
     return if (co?.isTrain == true) {
@@ -171,13 +174,32 @@ fun Operator.getLineColor(routeNumber: String, elseColor: Long): Long {
         "706" -> 0xFFB47AB5
         "751" -> 0xFFF48221
         "761P" -> 0xFF6F2D91
-        else -> getColor(routeNumber, elseColor)
+        else -> 0xFF616A71
     } else getColor(routeNumber, elseColor)
+}
+
+fun String.isLrtSPRRouteNumber(): Boolean {
+    return startsWith("9")
+}
+
+fun String.isLrtRouteNumberDisplayTooLong(): Boolean {
+    return length > 4
+}
+
+fun Operator.requireSmallerFontForRouteDisplay(routeNumber: String): Boolean {
+    return when {
+        this == Operator.MTR -> Shared.language != "en"
+        isFerry -> Shared.language != "en"
+        this == Operator.LRT && routeNumber.isLrtSPRRouteNumber() -> Shared.language != "en"
+        this == Operator.LRT && routeNumber.isLrtRouteNumberDisplayTooLong() -> true
+        else -> false
+    }
 }
 
 fun Operator.getDisplayRouteNumber(routeNumber: String, shortened: Boolean = false): String {
     return when {
         isFerry -> if (Shared.language == "en") "Ferry" else "渡輪"
+        this === Operator.LRT && routeNumber.isLrtSPRRouteNumber() -> (if (shortened) bilingualLrtSpecialShortened else bilingualLrtSpecial)[Shared.language]
         this === Operator.MTR -> if (shortened && Shared.language == "en") routeNumber else Shared.getMtrLineName(routeNumber, "???")
         this === Operator.KMB && routeNumber.getKMBSubsidiary() == KMBSubsidiary.SUNB -> "NR$routeNumber"
         else -> routeNumber
@@ -187,6 +209,7 @@ fun Operator.getDisplayRouteNumber(routeNumber: String, shortened: Boolean = fal
 fun Operator.getListDisplayRouteNumber(routeNumber: String, shortened: Boolean = false): String {
     return when {
         isFerry -> if (Shared.language == "en") "Ferry" else "渡輪"
+        this === Operator.LRT && routeNumber.startsWith("9") -> (if (shortened) bilingualLrtSpecialShortened else bilingualLrtSpecial)[Shared.language]
         this === Operator.MTR -> if (shortened && Shared.language == "en") routeNumber else Shared.getMtrLineName(routeNumber, "???")
         else -> routeNumber
     }

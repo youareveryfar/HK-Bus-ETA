@@ -68,6 +68,9 @@ struct SearchView: AppScreenView {
                                 KeyboardKey(content: alphabet).id(alphabet)
                             }
                         }
+                        if (!state.nextCharResult.characters.filter { $0.description == "*" }.isEmpty) {
+                            KeyboardKey(content: "*").id("*")
+                        }
                     }.frame(width: 35.scaled(appContext))
                 }.frame(height: 155.scaled(appContext))
             }

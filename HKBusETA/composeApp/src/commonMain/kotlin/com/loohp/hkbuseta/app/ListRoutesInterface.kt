@@ -173,6 +173,7 @@ import com.loohp.hkbuseta.common.objects.isCircular
 import com.loohp.hkbuseta.common.objects.isDefault
 import com.loohp.hkbuseta.common.objects.isFerry
 import com.loohp.hkbuseta.common.objects.prependTo
+import com.loohp.hkbuseta.common.objects.requireSmallerFontForRouteDisplay
 import com.loohp.hkbuseta.common.objects.resolvedDestFormatted
 import com.loohp.hkbuseta.common.objects.resolvedDestWithBranchFormatted
 import com.loohp.hkbuseta.common.objects.shouldPrependTo
@@ -1150,7 +1151,7 @@ fun RouteRow(
                 append(fare?.let { "  $$it" }?: "", SpanStyle(fontSize = TextUnit.Small))
             })
         }
-        if (co == Operator.NLB || co.isFerry || (showCircularOrigin && route.route!!.isCircular && co != Operator.CTB)) {
+        if (co == Operator.NLB || co.isFerry || (showCircularOrigin && route.route!!.isCircular && co != Operator.CTB && co != Operator.LRT)) {
             add((if (Shared.language == "en") "From ${route.route!!.orig.en}" else "從${route.route!!.orig.zh}開出").asAnnotatedString(SpanStyle(color = secondLineCoColor)))
         }
         if (co == Operator.KMB && routeNumber.getKMBSubsidiary() == KMBSubsidiary.SUNB) {
@@ -1222,11 +1223,7 @@ fun RouteRow(
                         PlatformText(
                             modifier = Modifier.offset(y = (-2).sp.dp),
                             textAlign = TextAlign.Start,
-                            fontSize = if ((co == Operator.MTR || co.isFerry) && Shared.language != "en") {
-                                22F.sp
-                            } else {
-                                30F.sp
-                            },
+                            fontSize = if (co.requireSmallerFontForRouteDisplay(routeNumber)) 22F.sp else 30F.sp,
                             lineHeight = 1.1F.em,
                             maxLines = 1,
                             color = if (isNightRoute) (if (darkMode) Color.Yellow else Color.White) else Color.Unspecified,
@@ -1264,11 +1261,7 @@ fun RouteRow(
                                     }
                                 },
                             textAlign = TextAlign.Start,
-                            fontSize = if ((co == Operator.MTR || co.isFerry) && Shared.language != "en") {
-                                18F.sp
-                            } else {
-                                26F.sp
-                            },
+                            fontSize = if (co.requireSmallerFontForRouteDisplay(routeNumber)) 18F.sp else 26F.sp,
                             lineHeight = 1.1F.em,
                             maxLines = 1,
                             color = if (isNightRoute) (if (darkMode) Color.Yellow else Color.White) else Color.Unspecified,
@@ -1299,11 +1292,7 @@ fun RouteRow(
                             }
                         },
                         textAlign = TextAlign.Start,
-                        fontSize = if ((co == Operator.MTR || co.isFerry) && Shared.language != "en") {
-                            22F.sp
-                        } else {
-                            30F.sp
-                        },
+                        fontSize = if (co.requireSmallerFontForRouteDisplay(routeNumber)) 22F.sp else 30F.sp,
                         lineHeight = 1.1F.em,
                         maxLines = 1,
                         color = if (isNightRoute) (if (darkMode) Color.Yellow else Color.White) else Color.Unspecified,

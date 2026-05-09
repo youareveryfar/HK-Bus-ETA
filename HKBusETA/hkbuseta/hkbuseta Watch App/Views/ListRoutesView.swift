@@ -352,7 +352,7 @@ struct ListRoutesView: AppScreenView {
         let gmbRegion = route.route!.gmbRegion
         let color = operatorColor(route.co.getColor(routeNumber: route.route!.routeNumber, elseColor: 0xFFFFFFFF as Int64), Operator.Companion().CTB.getOperatorColor(elseColor: 0xFFFFFFFF as Int64), jointOperatedColorFraction.state.floatValue) { _ in kmbCtbJoint }.asColor()
         let dest = route.resolvedDestFormatted(prependTo: false, context: appContext, style: KotlinArray(size: 0) { _ in nil }).get(language: Shared().language)
-        let altSize = route.co == Operator.Companion().MTR && Shared().language != "en"
+        let altSize = route.co.requireSmallerFontForRouteDisplay(routeNumber: route.route!.routeNumber)
         let routeNumber = route.co.getListDisplayRouteNumber(routeNumber: route.route!.routeNumber, shortened: true)
         let operatorName = route.co.getDisplayFormattedName(routeNumber: route.route!.routeNumber, kmbCtbJoint: kmbCtbJoint, gmbRegion: gmbRegion, language: Shared().language, elseName: FormattedTextKt.asFormattedText("???", style: [].asKt()), elseColor: 0xFFFFFFFF as Int64)
         let secondLine: [AttributedString] = {
@@ -369,13 +369,13 @@ struct ListRoutesView: AppScreenView {
                 }
                 list.append(stopName.get(language: Shared().language).asAttributedString())
             }
-            if route.co == Operator.Companion().NLB || route.co.isFerry || (showCircularOrigin && route.route!.isCircular && route.co != Operator.Companion().CTB) {
+            if route.co == Operator.Companion().NLB || route.co.isFerry || (showCircularOrigin && route.route!.isCircular && route.co != Operator.Companion().CTB && route.co != Operator.Companion().LRT) {
                 list.append((Shared().language == "en" ? "From \(route.route!.orig.en)" : "從\(route.route!.orig.zh)開出").asAttributedString(color: color.adjustBrightness(percentage: 0.75)))
             }
             if route.co == Operator.Companion().KMB && routeNumber.getKMBSubsidiary() == KMBSubsidiary.sunb {
                 list.append((Shared().language == "en" ? ("Sun Bus (NR\(route.route!.routeNumber))") : ("陽光巴士 (NR\(route.route!.routeNumber))")).asAttributedString(color: color.adjustBrightness(percentage: 0.75)))
             }
-            if let routeRemark = route.co.getRouteRemarks(context: appContext, routeNumber: routeNumber) {
+            if let routeRemark = route.co.getRouteRemarks(context: appContext, routeNumber: route.route!.routeNumber) {
                 list.append(routeRemark.get(language: Shared().language).asAttributedString(color: color.adjustBrightness(percentage: 0.75)))
             }
             return list

@@ -3085,20 +3085,24 @@ fun TrainETADisplay(
             add(TableRow(
                 onClick = if (co == Operator.LRT) ({
                     scope.launch {
-                        Registry.getInstance(instance).findRoutes(lines[seq - 1].routeNumber, true).asSequence()
-                            .filter { it.route!!.stops[Operator.LRT]?.contains(stopId) == true }
-                            .minByOrNull { it.route!!.dest[Shared.language].editDistance(entry.destination.string.trim()) }
-                            ?.let { route ->
-                                Registry.getInstance(instance).addLastLookupRoute(route.routeKey, instance)
-                                val intent = AppIntent(instance, AppScreen.LIST_STOPS)
-                                intent.putExtra("route", route)
-                                intent.putExtra("stopId", stopId)
-                                if (HistoryStack.historyStack.value.last().screenGroup == AppScreenGroup.ROUTE_STOPS) {
-                                    instance.startActivity(AppIntent(instance, AppScreen.DUMMY))
-                                    delay(300)
+                        val lineEntry = lines[seq - 1]
+                        for (searchRouteNumber in lineEntry.getLrtSearchRouteNumbers()) {
+                            Registry.getInstance(instance).findRoutes(searchRouteNumber, true).asSequence()
+                                .filter { it.route!!.stops[Operator.LRT]?.contains(stopId) == true }
+                                .minByOrNull { it.route!!.dest[Shared.language].editDistance(entry.destination.string.trim()) }
+                                ?.let { route ->
+                                    Registry.getInstance(instance).addLastLookupRoute(route.routeKey, instance)
+                                    val intent = AppIntent(instance, AppScreen.LIST_STOPS)
+                                    intent.putExtra("route", route)
+                                    intent.putExtra("stopId", stopId)
+                                    if (HistoryStack.historyStack.value.last().screenGroup == AppScreenGroup.ROUTE_STOPS) {
+                                        instance.startActivity(AppIntent(instance, AppScreen.DUMMY))
+                                        delay(300)
+                                    }
+                                    instance.startActivity(intent)
+                                    break
                                 }
-                                instance.startActivity(intent)
-                            }
+                        }
                     }
                 }) else null,
                 background = {
@@ -3408,5 +3412,13 @@ fun OptionButton(
                 }
             }
         }
+    }
+}
+
+private fun Registry.ETALineEntry.getLrtSearchRouteNumbers(): Sequence<String> {
+    return if (routeNumber == internalRouteNumber) {
+        sequenceOf(routeNumber)
+    } else {
+        sequenceOf(routeNumber, internalRouteNumber)
     }
 }
