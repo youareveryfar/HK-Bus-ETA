@@ -1268,29 +1268,37 @@ def add_route_remarks():
     }
     nlb = {}
     lrt = {
+        "705": {
+            "zh": "逆時針方向",
+            "en": "Anticlockwise Direction"
+        },
+        "706": {
+            "zh": "順時針方向",
+            "en": "Clockwise Direction"
+        },
         "901": {
-            "zh": "到兆康後改行615綫往屯門碼頭",
-            "en": "Change to Route 615 at Siu Hong to Tuen Mun Ferry Pier"
+            "zh": "特別路線 - 到兆康後改行615綫往屯門碼頭",
+            "en": "Special Route - Change to Route 615 at Siu Hong to Tuen Mun Ferry Pier"
         },
         "902": {
-            "zh": "到兆康後改行507P綫往屯門碼頭",
-            "en": "Change to Route 507P at Siu Hong to Tuen Mun Ferry Pier"
+            "zh": "特別路線 - 到兆康後改行507P綫往屯門碼頭",
+            "en": "Special Route - Change to Route 507P at Siu Hong to Tuen Mun Ferry Pier"
         },
         "751P": {
             "zh": "特別路線",
             "en": "Special Route"
         },
         "751*": {
-            "zh": "到河田後改行507綫往屯門碼頭",
-            "en": "Change to Route 507 at Ho Tin to Tuen Mun Ferry Pier"
+            "zh": "特別路線 - 到河田後改行507綫往屯門碼頭",
+            "en": "Special Route - Change to Route 507 at Ho Tin to Tuen Mun Ferry Pier"
         },
         "506P": {
             "zh": "特別路線",
             "en": "Special Route"
         },
         "506P*": {
-            "zh": "到兆康後改行720綫前往天榮 再改行751P綫前往天水圍",
-            "en": "Change to Route 720 at Siu Hong to Tin Wing then change to Route 751P to Tin Shui Wai"
+            "zh": "特別路線 - 到兆康後改行720綫前往天榮 再改行751P綫前往天水圍",
+            "en": "Special Route - Change to Route 720 at Siu Hong to Tin Wing then change to Route 751P to Tin Shui Wai"
         },
     }
 
