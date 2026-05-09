@@ -1431,7 +1431,7 @@ def add_route_remarks():
     ROUTE_REMARKS["kmb"] = kmb
     ROUTE_REMARKS["ctb"] = ctb
     ROUTE_REMARKS["nlb"] = nlb
-    ROUTE_REMARKS["lrt"] = lrt
+    ROUTE_REMARKS["lightRail"] = lrt
 
     for route_number, operator_data in MISSING_ROUTES.items():
         for co, data in operator_data.items():
