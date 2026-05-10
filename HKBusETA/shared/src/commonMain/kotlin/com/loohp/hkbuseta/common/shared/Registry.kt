@@ -3465,7 +3465,7 @@ class Registry {
                                 append(EMSP)
                             },
                             time = annotatedMinsMessage,
-                            remark = lrt.routeRemark.asFormattedText()
+                            remark = lrt.routeRemark.asFormattedText(SmallSize)
                         )
                         lrtAllMode -> ETALineEntryText.lrt(
                             platform = buildFormattedString {
@@ -3489,7 +3489,7 @@ class Registry {
                                 append(EMSP)
                             },
                             time = annotatedMinsMessage,
-                            remark = lrt.routeRemark.asFormattedText()
+                            remark = lrt.routeRemark.asFormattedText(SmallSize)
                         )
                         else -> ETALineEntryText.lrt(
                             platform = buildFormattedString {
@@ -3507,10 +3507,10 @@ class Registry {
                                 append("  ")
                             },
                             time = annotatedMinsMessage,
-                            remark = lrt.routeRemark.asFormattedText()
+                            remark = lrt.routeRemark.asFormattedText(SmallSize)
                         )
                     }
-                    lines[seq] = ETALineEntry.etaEntry(message, toShortText(language, mins, 1), lrt.platformNumber, lrt.routeNumber, mins.toDouble(), mins)
+                    lines[seq] = ETALineEntry.etaEntry(message, toShortText(language, mins, 1), lrt.platformNumber, lrt.routeNumber, mins.toDouble(), mins, lrt.internalRouteNumber)
                 }
             }
         }
@@ -4082,9 +4082,9 @@ class Registry {
 
             fun etaEntry(text: ETALineEntryText, shortText: ETAShortText, platform: Int, routeNumber: String, eta: Double, etaRounded: Long, internalRouteNumber: String = routeNumber): ETALineEntry {
                 return if (etaRounded > -60) {
-                    ETALineEntry(text, shortText, platform, routeNumber, eta.coerceAtLeast(0.0), etaRounded.coerceAtLeast(0), routeNumber)
+                    ETALineEntry(text, shortText, platform, routeNumber, eta.coerceAtLeast(0.0), etaRounded.coerceAtLeast(0), internalRouteNumber)
                 } else {
-                    ETALineEntry(text, shortText, platform, routeNumber, -1.0, -1, routeNumber)
+                    ETALineEntry(text, shortText, platform, routeNumber, -1.0, -1, internalRouteNumber)
                 }
             }
         }

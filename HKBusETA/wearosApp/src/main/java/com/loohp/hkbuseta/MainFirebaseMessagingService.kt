@@ -13,7 +13,7 @@ import java.util.concurrent.TimeUnit
 class MainFirebaseMessagingService: FirebaseMessagingService() {
 
     override fun onNewToken(token: String) {
-        debugLog("Refreshed token: $token")
+        // debugLog("Refreshed token: $token")
     }
 
     override fun onMessageReceived(message: RemoteMessage) {
