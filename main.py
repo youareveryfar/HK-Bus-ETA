@@ -1277,20 +1277,20 @@ def add_route_remarks():
             "en": "Clockwise Direction"
         },
         "901": {
-            "zh": "特別路線 - 到兆康後改行615綫往屯門碼頭",
-            "en": "Special Route - Change to Route 615 at Siu Hong to Tuen Mun Ferry Pier"
+            "zh": "特別路線 - 到兆康後改行615綫途經良景、青雲前往屯門碼頭",
+            "en": "Special Route - Change to Route 615 at Siu Hong through Leung King, Tsing Wun to Tuen Mun Ferry Pier"
         },
         "902": {
-            "zh": "特別路線 - 到兆康後改行507P綫往屯門碼頭",
-            "en": "Special Route - Change to Route 507P at Siu Hong to Tuen Mun Ferry Pier"
+            "zh": "特別路線 - 到兆康後改行507P綫途經青松、建生、田景前往屯門碼頭",
+            "en": "Special Route - Change to Route 507P at Siu Hong through Ching Chung, Kin Shan, Tin King to Tuen Mun Ferry Pier"
         },
         "751P": {
             "zh": "特別路線",
             "en": "Special Route"
         },
         "751*": {
-            "zh": "特別路線 - 到河田後改行507綫往屯門碼頭",
-            "en": "Special Route - Change to Route 507 at Ho Tin to Tuen Mun Ferry Pier"
+            "zh": "特別路線 - 到河田後改行507綫途經屯門前往屯門碼頭",
+            "en": "Special Route - Change to Route 507 at Ho Tin through Tuen Mun to Tuen Mun Ferry Pier"
         },
         "506P": {
             "zh": "特別路線",
