@@ -474,20 +474,11 @@ def download_and_process_data_sheet():
     DATA_SHEET["routeList"]["706+1+Tin Shui Wai+Tin Shui Wai (Circular)"]["stops"]["lightRail"].append(lrt_706_start)
     DATA_SHEET["routeList"]["706+1+Tin Shui Wai+Tin Shui Wai (Circular)"]["lrtCircular"] = {"en": "TSW Circular", "zh": "天水圍循環綫"}
 
-    # del DATA_SHEET["routeList"]["901+1+Tin Yat+Tuen Mun Ferry Pier"]
-    # del DATA_SHEET["routeList"]["902+1+Tin Yat+Tuen Mun Ferry Pier"]
-
-    DATA_SHEET["routeList"]["751*+1+Tin Yat+Tuen Mun Ferry Pier"] = DATA_SHEET["routeList"]["903+1+Tin Yat+Tuen Mun Ferry Pier"]
-    DATA_SHEET["routeList"]["751*+1+Tin Yat+Tuen Mun Ferry Pier"]["route"] = "751*"
-    del DATA_SHEET["routeList"]["903+1+Tin Yat+Tuen Mun Ferry Pier"]
-
-    DATA_SHEET["routeList"]["506P*+1+Tuen Mun Ferry Pier+Tin Shui Wai"] = DATA_SHEET["routeList"]["904+1+Tuen Mun Ferry Pier+Tin Shui Wai"]
-    DATA_SHEET["routeList"]["506P*+1+Tuen Mun Ferry Pier+Tin Shui Wai"]["route"] = "506P*"
-    del DATA_SHEET["routeList"]["904+1+Tuen Mun Ferry Pier+Tin Shui Wai"]
-
-    DATA_SHEET["routeList"]["506P+1+Tuen Mun Ferry Pier+Siu Hong"] = DATA_SHEET["routeList"]["905+1+Tuen Mun Ferry Pier+Siu Hong"]
-    DATA_SHEET["routeList"]["506P+1+Tuen Mun Ferry Pier+Siu Hong"]["route"] = "506P"
-    del DATA_SHEET["routeList"]["905+1+Tuen Mun Ferry Pier+Siu Hong"]
+    DATA_SHEET["routeList"]["901+1+Tin Yat+Siu Hong"] = DATA_SHEET["routeList"]["SPR+1+Tin Yat+Siu Hong"]
+    DATA_SHEET["routeList"]["901+1+Tin Yat+Siu Hong"]["route"] = "901"
+    DATA_SHEET["routeList"]["902+1+Tin Yat+Siu Hong"] = DATA_SHEET["routeList"]["SPR+1+Tin Yat+Siu Hong"]
+    DATA_SHEET["routeList"]["902+1+Tin Yat+Siu Hong"]["route"] = "902"
+    del DATA_SHEET["routeList"]["SPR+1+Tin Yat+Siu Hong"]
 
     if "HK1+1+STAR FERRY+[KMB Tour HK] TSIM SHA TSUI, MONG KOK and WONG TAI" in DATA_SHEET["routeList"]:
         DATA_SHEET["routeList"]["HK1+1+STAR FERRY+[KMB Tour HK] TSIM SHA TSUI, MONG KOK and WONG TAI"]["dest"]["zh"] = "尖沙咀, 旺角及黃大仙 [九巴遊香港]"
@@ -1292,14 +1283,18 @@ def add_route_remarks():
             "zh": "特別路線 - 到河田後改行507綫途經屯門前往屯門碼頭",
             "en": "Special Route - Change to Route 507 at Ho Tin through Tuen Mun to Tuen Mun Ferry Pier"
         },
-        "506P": {
+        "720*": {
+            "zh": "特別路線 - 到天榮後改行751P綫前往天水圍",
+            "en": "Special Route - Change to Route 751P at Tin Wing to Tin Shui Wai"
+        },
+        "506P*": {
             "zh": "特別路線",
             "en": "Special Route"
         },
-        "506P*": {
-            "zh": "特別路線 - 到兆康後改行720綫前往天榮 再改行751P綫前往天水圍",
-            "en": "Special Route - Change to Route 720 at Siu Hong to Tin Wing then change to Route 751P to Tin Shui Wai"
-        },
+        "507P*": {
+            "zh": "特別路線",
+            "en": "Special Route"
+        }
     }
 
     kmb_routes_data_with_timetables = {}
