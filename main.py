@@ -474,9 +474,9 @@ def download_and_process_data_sheet():
     DATA_SHEET["routeList"]["706+1+Tin Shui Wai+Tin Shui Wai (Circular)"]["stops"]["lightRail"].append(lrt_706_start)
     DATA_SHEET["routeList"]["706+1+Tin Shui Wai+Tin Shui Wai (Circular)"]["lrtCircular"] = {"en": "TSW Circular", "zh": "天水圍循環綫"}
 
-    DATA_SHEET["routeList"]["901+1+Tin Yat+Siu Hong"] = DATA_SHEET["routeList"]["SPR+1+Tin Yat+Siu Hong"]
+    DATA_SHEET["routeList"]["901+1+Tin Yat+Siu Hong"] = copy.deepcopy(DATA_SHEET["routeList"]["SPR+1+Tin Yat+Siu Hong"])
     DATA_SHEET["routeList"]["901+1+Tin Yat+Siu Hong"]["route"] = "901"
-    DATA_SHEET["routeList"]["902+1+Tin Yat+Siu Hong"] = DATA_SHEET["routeList"]["SPR+1+Tin Yat+Siu Hong"]
+    DATA_SHEET["routeList"]["902+1+Tin Yat+Siu Hong"] = copy.deepcopy(DATA_SHEET["routeList"]["SPR+1+Tin Yat+Siu Hong"])
     DATA_SHEET["routeList"]["902+1+Tin Yat+Siu Hong"]["route"] = "902"
     del DATA_SHEET["routeList"]["SPR+1+Tin Yat+Siu Hong"]
 
