@@ -3061,7 +3061,7 @@ fun TrainETADisplay(
     val hasClockTime by remember(resolvedText) { derivedStateOf { resolvedText.any { it.value.clockTime.isNotEmpty() } } }
     val hasTime by remember(resolvedText) { derivedStateOf { resolvedText.any { it.value.time.isNotEmpty() } } }
     val hasOperator by remember(resolvedText) { derivedStateOf { resolvedText.any { it.value.operator.isNotEmpty() } } }
-    val hasRemark by remember(resolvedText) { derivedStateOf { true || resolvedText.any { it.value.remark.isNotEmpty() } } }
+    val hasRemark by remember(resolvedText) { derivedStateOf { resolvedText.any { it.value.remark.isNotEmpty() } } }
 
     val columns by remember(resolvedText) { derivedStateOf { buildList {
         if (hasPlatform) add(TableColumn(width = TableColumnWidth.Wrap))
@@ -3125,11 +3125,7 @@ fun TrainETADisplay(
                 },
                 remark = entry.remark.takeIf { remarkOnNextLine && it.isNotBlank() }?.let { {
                     TrainEtaText(
-                        text = buildFormattedString {
-                            append("(", SmallSize)
-                            append(entry.remark, SmallSize)
-                            append(")", SmallSize)
-                        },
+                        text = entry.remark,
                         freshness = freshness
                     )
                 } },

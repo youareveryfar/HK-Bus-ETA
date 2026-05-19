@@ -106,37 +106,26 @@ fun Modifier.scrollbar(
             itemsVisible.forEach { actualItemLength[it.index] = it.size }
             val knownLength = actualItemLength.entries.sumOf { it.value }
             val knownAmount = actualItemLength.values.count()
-            val knownAverageItemLength = knownLength / knownAmount
+            val knownAverageItemLength = if (knownAmount == 0) 0 else (knownLength / knownAmount)
             val contentOffset = (0 until state.firstVisibleItemIndex).sumOf { actualItemLength.getOrElse(it) { knownAverageItemLength } }.toFloat() + state.firstVisibleItemScrollOffset
-            val contentLength = knownLength + (state.layoutInfo.totalItemsCount - knownAmount) * (knownLength / knownAmount)
-            val viewPortLength = if (direction == Orientation.Vertical)
-                viewPortHeight else viewPortWidth
-            val viewPortCrossAxisLength = if (direction == Orientation.Vertical)
-                size.width else size.height
-            indicatorLength = ((viewPortLength / contentLength) * viewPortLength) - (
-                    if (direction == Orientation.Vertical) topPadding + bottomPadding
-                    else startPadding + endPadding
-                    )
+            val contentLength = (knownLength + (state.layoutInfo.totalItemsCount - knownAmount) * knownAverageItemLength).toFloat().coerceAtLeast(0.001f)  // To prevent divide by zero error
+            val viewPortLength = if (direction == Orientation.Vertical) viewPortHeight else viewPortWidth
+            val viewPortCrossAxisLength = if (direction == Orientation.Vertical) size.width else size.height
+            indicatorLength = ((viewPortLength / contentLength) * viewPortLength) - (if (direction == Orientation.Vertical) topPadding + bottomPadding else startPadding + endPadding)
             val indicatorThicknessPx = indicatorThickness.toPx()
 
             scrollOffsetViewPort = viewPortLength * contentOffset / contentLength
 
-            val scrollbarSizeWithoutInsets = if (direction == Orientation.Vertical)
-                Size(indicatorThicknessPx, animatedIndicatorLength)
-            else Size(animatedIndicatorLength, indicatorThicknessPx)
+            val scrollbarSizeWithoutInsets = if (direction == Orientation.Vertical) Size(indicatorThicknessPx, animatedIndicatorLength) else Size(animatedIndicatorLength, indicatorThicknessPx)
 
             val scrollbarPositionWithoutInsets = if (direction == Orientation.Vertical)
                 Offset(
-                    x = if (layoutDirection == LayoutDirection.Ltr)
-                        viewPortCrossAxisLength - indicatorThicknessPx - endPadding
-                    else startPadding,
+                    x = if (layoutDirection == LayoutDirection.Ltr) viewPortCrossAxisLength - indicatorThicknessPx - endPadding else startPadding,
                     y = animatedScrollOffsetViewPort + topPadding
                 )
             else
                 Offset(
-                    x = if (layoutDirection == LayoutDirection.Ltr)
-                        animatedScrollOffsetViewPort + startPadding
-                    else viewPortLength - animatedScrollOffsetViewPort - animatedIndicatorLength - endPadding,
+                    x = if (layoutDirection == LayoutDirection.Ltr) animatedScrollOffsetViewPort + startPadding else viewPortLength - animatedScrollOffsetViewPort - animatedIndicatorLength - endPadding,
                     y = viewPortCrossAxisLength - indicatorThicknessPx - bottomPadding
                 )
 
@@ -184,22 +173,15 @@ fun Modifier.scrollbar(
                 padding.calculateEndPadding(layoutDirection).toPx()
             )
             val contentOffset = state.value
-            val viewPortLength = if (direction == Orientation.Vertical)
-                size.height else size.width
-            val viewPortCrossAxisLength = if (direction == Orientation.Vertical)
-                size.width else size.height
+            val viewPortLength = if (direction == Orientation.Vertical) size.height else size.width
+            val viewPortCrossAxisLength = if (direction == Orientation.Vertical) size.width else size.height
             val contentLength = (viewPortLength + state.maxValue).coerceAtLeast(0.001f)  // To prevent divide by zero error
-            val indicatorLength = ((viewPortLength / contentLength) * viewPortLength) - (
-                    if (direction == Orientation.Vertical) topPadding + bottomPadding
-                    else startPadding + endPadding
-                    )
+            val indicatorLength = ((viewPortLength / contentLength) * viewPortLength) - (if (direction == Orientation.Vertical) topPadding + bottomPadding else startPadding + endPadding)
             val indicatorThicknessPx = indicatorThickness.toPx()
 
             val scrollOffsetViewPort = viewPortLength * contentOffset / contentLength
 
-            val scrollbarSizeWithoutInsets = if (direction == Orientation.Vertical)
-                Size(indicatorThicknessPx, indicatorLength)
-            else Size(indicatorLength, indicatorThicknessPx)
+            val scrollbarSizeWithoutInsets = if (direction == Orientation.Vertical) Size(indicatorThicknessPx, indicatorLength) else Size(indicatorLength, indicatorThicknessPx)
 
             val scrollbarPositionWithoutInsets = if (direction == Orientation.Vertical)
                 Offset(

@@ -510,10 +510,14 @@ private suspend fun etaQueryLrt(stopId: String, route: Route, precomputedData: W
                 if (routeList != null) {
                     for (u in 0 until routeList.size) {
                         val routeData = routeList.optJsonObject(u)!!
-                        val routeNumber = routeData.optString("route_no")
+                        val lrtSpecial = routeData.optInt("special") > 0
+                        val routeNumber = routeData
+                            .optString(if (lrtSpecial) "additionalInfo1" else "route_no")
+                            .let { if (it == "SPR") (if (language == "en") "Special" else "特別車") else it }
+                        val internalRouteNumber = routeData.optString("route_no")
                         if (routeData.contains("time_ch")) {
                             val destCh = routeData.optString("dest_ch")
-                            if (matchRoutes.any { routeNumber == it.routeNumber && isLrtStopOnOrAfter(precomputedData.lrtStopList, stopId, destCh, it) }) {
+                            if (matchRoutes.any { (routeNumber == it.routeNumber || internalRouteNumber == it.routeNumber) && isLrtStopOnOrAfter(precomputedData.lrtStopList, stopId, destCh, it) }) {
                                 val mins = "([0-9]+) *min".toRegex().find(routeData.optString("time_en"))?.groupValues?.getOrNull(1)?.toLong()?: 0
                                 results.add(currentLocalDateTime(mins.minutes))
                             }

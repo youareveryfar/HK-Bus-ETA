@@ -3365,14 +3365,14 @@ class Registry {
                                 val internalRouteNumber = routeData.optString("route_no")
                                 if (routeData.contains("time_ch")) {
                                     val destCh = routeData.optString("dest_ch")
-                                    if (matchRoutes.any { routeNumber == it.routeNumber && isLrtStopOnOrAfter(stopId, destCh, it) }) {
+                                    if (matchRoutes.any { (routeNumber == it.routeNumber || internalRouteNumber == it.routeNumber) && isLrtStopOnOrAfter(stopId, destCh, it) }) {
                                         val mins = "([0-9]+) *min".toRegex().find(routeData.optString("time_en"))?.groupValues?.getOrNull(1)?.toLong()?: 0
                                         val minsMsg = routeData.optString(if (language == "en") "time_en" else "time_ch")
                                         val dest = routeData.optString(if (language == "en") "dest_en" else "dest_ch")
                                         val trainLength = routeData.optInt("train_length")
                                         results.add(LrtETAData(routeNumber, dest, trainLength, platformNumber, mins, minsMsg, remark, internalRouteNumber))
                                     }
-                                } else if (results.none { it.routeNumber == routeNumber } && matchRoutes.any { routeNumber == it.routeNumber }) {
+                                } else if (results.none { routeNumber == it.routeNumber || internalRouteNumber == it.routeNumber } && matchRoutes.any { routeNumber == it.routeNumber }) {
                                     val message = if (language == "en") "Server unable to provide data" else "系統未能提供資訊"
                                     results.add(LrtETAData(routeNumber, "", 0, platformNumber, Long.MAX_VALUE, message, remark, internalRouteNumber))
                                 }
@@ -3399,7 +3399,7 @@ class Registry {
                                     val dest = routeData.optString(if (language == "en") "dest_en" else "dest_ch")
                                     val trainLength = routeData.optInt("train_length")
                                     results.add(LrtETAData(routeNumber, dest, trainLength, platformNumber, mins, minsMsg, remark, internalRouteNumber))
-                                } else if (results.none { it.routeNumber == routeNumber }) {
+                                } else if (results.none { routeNumber == it.routeNumber || internalRouteNumber == it.routeNumber }) {
                                     val message = if (language == "en") "Server unable to provide data" else "系統未能提供資訊"
                                     results.add(LrtETAData(routeNumber, "", 0, platformNumber, Long.MAX_VALUE, message, remark, internalRouteNumber))
                                 }
@@ -3465,7 +3465,7 @@ class Registry {
                                 append(EMSP)
                             },
                             time = annotatedMinsMessage,
-                            remark = lrt.routeRemark.asFormattedText()
+                            remark = lrt.routeRemark.asFormattedText(SmallSize)
                         )
                         lrtAllMode -> ETALineEntryText.lrt(
                             platform = buildFormattedString {
@@ -3489,7 +3489,7 @@ class Registry {
                                 append(EMSP)
                             },
                             time = annotatedMinsMessage,
-                            remark = lrt.routeRemark.asFormattedText()
+                            remark = lrt.routeRemark.asFormattedText(SmallSize)
                         )
                         else -> ETALineEntryText.lrt(
                             platform = buildFormattedString {
@@ -3507,10 +3507,10 @@ class Registry {
                                 append("  ")
                             },
                             time = annotatedMinsMessage,
-                            remark = lrt.routeRemark.asFormattedText()
+                            remark = lrt.routeRemark.asFormattedText(SmallSize)
                         )
                     }
-                    lines[seq] = ETALineEntry.etaEntry(message, toShortText(language, mins, 1), lrt.platformNumber, lrt.routeNumber, mins.toDouble(), mins)
+                    lines[seq] = ETALineEntry.etaEntry(message, toShortText(language, mins, 1), lrt.platformNumber, lrt.routeNumber, mins.toDouble(), mins, lrt.internalRouteNumber)
                 }
             }
         }
@@ -4082,9 +4082,9 @@ class Registry {
 
             fun etaEntry(text: ETALineEntryText, shortText: ETAShortText, platform: Int, routeNumber: String, eta: Double, etaRounded: Long, internalRouteNumber: String = routeNumber): ETALineEntry {
                 return if (etaRounded > -60) {
-                    ETALineEntry(text, shortText, platform, routeNumber, eta.coerceAtLeast(0.0), etaRounded.coerceAtLeast(0), routeNumber)
+                    ETALineEntry(text, shortText, platform, routeNumber, eta.coerceAtLeast(0.0), etaRounded.coerceAtLeast(0), internalRouteNumber)
                 } else {
-                    ETALineEntry(text, shortText, platform, routeNumber, -1.0, -1, routeNumber)
+                    ETALineEntry(text, shortText, platform, routeNumber, -1.0, -1, internalRouteNumber)
                 }
             }
         }
