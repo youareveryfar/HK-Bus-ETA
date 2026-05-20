@@ -2331,18 +2331,18 @@ fun LRTETADisplayByPlatformInterface(
                 val entry = etaState.rawLines[i]
                 if (entry == null) {
                     break
-                } else if (entry.platform >= 1) {
-                    byPlatform[entry.platform] = mutableListOf()
+                } else if (entry.primaryPlatform >= 1) {
+                    byPlatform[entry.primaryPlatform] = mutableListOf()
                 }
             }
             for (i in 1..Int.MAX_VALUE) {
                 val entry = etaState.rawLines[i]
                 if (entry == null) {
                     break
-                } else if (entry.platform < 1) {
+                } else if (entry.primaryPlatform < 1) {
                     byPlatform.keys.forEach { byPlatform[it]!!.add(entry) }
-                } else if (byPlatform.containsKey(entry.platform)) {
-                    byPlatform[entry.platform]!!.add(entry)
+                } else if (byPlatform.containsKey(entry.primaryPlatform)) {
+                    byPlatform[entry.primaryPlatform]!!.add(entry)
                 }
             }
             byPlatform.asSequence().sortedBy { it.key }.associate { it.toPair() }
@@ -2451,7 +2451,7 @@ fun LRTETADisplayByRouteInterface(
                 val entry = etaState.rawLines[i]
                 if (entry == null) {
                     break
-                } else if (entry.platform >= 1) {
+                } else if (entry.primaryPlatform >= 1) {
                     byRouteNumber[entry.routeNumber] = mutableListOf()
                 }
             }
@@ -2459,7 +2459,7 @@ fun LRTETADisplayByRouteInterface(
                 val entry = etaState.rawLines[i]
                 if (entry == null) {
                     break
-                } else if (entry.platform < 1) {
+                } else if (entry.primaryPlatform < 1) {
                     byRouteNumber.keys.forEach { byRouteNumber[it]!!.add(entry) }
                 } else if (byRouteNumber.containsKey(entry.routeNumber)) {
                     byRouteNumber[entry.routeNumber]!!.add(entry)
@@ -3072,7 +3072,7 @@ fun TrainETADisplay(
         if (hasClockTime) add(TableColumn(width = TableColumnWidth.Wrap, alignment = Alignment.End))
         if (hasTime) add(TableColumn(
             width = TableColumnWidth.Max(TableColumnWidth.Wrap, TableColumnWidth.Fixed(80.dp)),
-            alignment = if (lines.first().platform <= 0) Alignment.Start else Alignment.End
+            alignment = if (lines.first().primaryPlatform <= 0) Alignment.Start else Alignment.End
         ))
         if (hasOperator) add(TableColumn(width = TableColumnWidth.Wrap))
     } } }

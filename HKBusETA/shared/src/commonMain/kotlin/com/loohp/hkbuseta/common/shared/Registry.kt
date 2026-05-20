@@ -120,7 +120,6 @@ import com.loohp.hkbuseta.common.utils.currentBranchStatus
 import com.loohp.hkbuseta.common.utils.currentEpochSeconds
 import com.loohp.hkbuseta.common.utils.currentLocalDateTime
 import com.loohp.hkbuseta.common.utils.currentTimeMillis
-import com.loohp.hkbuseta.common.utils.debugLog
 import com.loohp.hkbuseta.common.utils.decodeFromStringReadChannel
 import com.loohp.hkbuseta.common.utils.doRetry
 import com.loohp.hkbuseta.common.utils.editDistance
@@ -3510,7 +3509,7 @@ class Registry {
                             remark = lrt.routeRemark.asFormattedText(SmallSize)
                         )
                     }
-                    lines[seq] = ETALineEntry.etaEntry(message, toShortText(language, mins, 1), lrt.platformNumber, lrt.routeNumber, mins.toDouble(), mins, lrt.internalRouteNumber)
+                    lines[seq] = ETALineEntry.etaEntry(message, toShortText(language, mins, 1), listOf(lrt.platformNumber), lrt.routeNumber, mins.toDouble(), mins, lrt.internalRouteNumber)
                 }
             }
         }
@@ -3579,7 +3578,7 @@ class Registry {
                         for (u in 0 until trains.size) {
                             val trainData = trains.optJsonObject(u)!!
                             val seq = trainData.optString("seq").toInt()
-                            val platform = trainData.optString("plat").toInt()
+                            val platforms = trainData.optString("plat").split("/").map { it.toInt() }
                             val specialRoute = trainData.optString("route")
                             var dest = DATA!!.dataSheet.stopList[trainData.optString("dest")]!!.name[language]
                             if (stopId != "AIR") {
@@ -3616,7 +3615,7 @@ class Registry {
                             val message = ETALineEntryText.mtr(
                                 platform = buildFormattedString {
                                     append("", BoldStyle)
-                                    append(platform.getCircledNumber(), Colored(lineColor))
+                                    append(platforms.joinToString(separator = " ") { it.getCircledNumber() }, Colored(lineColor))
                                     append(" ")
                                 },
                                 destination = buildFormattedString {
@@ -3630,7 +3629,7 @@ class Registry {
                                     "".asFormattedText()
                                 }
                             )
-                            lines[seq] = ETALineEntry.etaEntry(message, toShortText(language, minsRounded.toLong(), 1, special), platform, route.routeNumber, mins, minsRounded.toLong())
+                            lines[seq] = ETALineEntry.etaEntry(message, toShortText(language, minsRounded.toLong(), 1, special), platforms, route.routeNumber, mins, minsRounded.toLong())
                         }
                     }
                 }
@@ -4057,7 +4056,7 @@ class Registry {
     class ETALineEntry private constructor(
         val text: ETALineEntryText,
         val shortText: ETAShortText,
-        val platform: Int,
+        val platforms: List<Int>,
         val routeNumber: String,
         val eta: Double,
         val etaRounded: Long,
@@ -4066,28 +4065,30 @@ class Registry {
 
         companion object {
 
-            val EMPTY = ETALineEntry(ETALineEntryText.EMPTY, ETAShortText.EMPTY, -1, "", -1.0, -1)
+            val EMPTY = ETALineEntry(ETALineEntryText.EMPTY, ETAShortText.EMPTY, emptyList(), "", -1.0, -1)
 
             fun textEntry(text: String): ETALineEntry {
-                return ETALineEntry(ETALineEntryText.remark(text.asFormattedText()), ETAShortText.EMPTY, -1, "", -1.0, -1)
+                return ETALineEntry(ETALineEntryText.remark(text.asFormattedText()), ETAShortText.EMPTY, emptyList(), "", -1.0, -1)
             }
 
             fun textEntry(text: FormattedText): ETALineEntry {
-                return ETALineEntry(ETALineEntryText.remark(text), ETAShortText.EMPTY, -1, "", -1.0, -1)
+                return ETALineEntry(ETALineEntryText.remark(text), ETAShortText.EMPTY, emptyList(), "", -1.0, -1)
             }
 
             fun etaEntry(text: ETALineEntryText, shortText: ETAShortText, routeNumber: String, eta: Double, etaRounded: Long): ETALineEntry {
-                return etaEntry(text, shortText, -1, routeNumber, eta, etaRounded)
+                return etaEntry(text, shortText, emptyList(), routeNumber, eta, etaRounded)
             }
 
-            fun etaEntry(text: ETALineEntryText, shortText: ETAShortText, platform: Int, routeNumber: String, eta: Double, etaRounded: Long, internalRouteNumber: String = routeNumber): ETALineEntry {
+            fun etaEntry(text: ETALineEntryText, shortText: ETAShortText, platforms: List<Int>, routeNumber: String, eta: Double, etaRounded: Long, internalRouteNumber: String = routeNumber): ETALineEntry {
                 return if (etaRounded > -60) {
-                    ETALineEntry(text, shortText, platform, routeNumber, eta.coerceAtLeast(0.0), etaRounded.coerceAtLeast(0), internalRouteNumber)
+                    ETALineEntry(text, shortText, platforms, routeNumber, eta.coerceAtLeast(0.0), etaRounded.coerceAtLeast(0), internalRouteNumber)
                 } else {
-                    ETALineEntry(text, shortText, platform, routeNumber, -1.0, -1, internalRouteNumber)
+                    ETALineEntry(text, shortText, platforms, routeNumber, -1.0, -1, internalRouteNumber)
                 }
             }
         }
+
+        val primaryPlatform: Int get() = platforms.firstOrNull()?: -1
 
         override fun equals(other: Any?): Boolean {
             if (this === other) return true
@@ -4095,7 +4096,7 @@ class Registry {
 
             if (text != other.text) return false
             if (shortText != other.shortText) return false
-            if (platform != other.platform) return false
+            if (platforms != other.platforms) return false
             if (routeNumber != other.routeNumber) return false
             if (eta != other.eta) return false
             if (etaRounded != other.etaRounded) return false
@@ -4105,7 +4106,7 @@ class Registry {
         override fun hashCode(): Int {
             var result = text.hashCode()
             result = 31 * result + shortText.hashCode()
-            result = 31 * result + platform
+            result = 31 * result + platforms.hashCode()
             result = 31 * result + routeNumber.hashCode()
             result = 31 * result + eta.hashCode()
             result = 31 * result + etaRounded.hashCode()
