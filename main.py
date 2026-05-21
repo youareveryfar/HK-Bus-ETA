@@ -490,6 +490,17 @@ def download_and_process_data_sheet():
         DATA_SHEET["routeList"]["HK2+1+KOWLOON STATION+[KMB Tour HK] TSIM SHA TSUI and TSING MA BRIDGE"]["dest"]["zh"] = "尖沙咀及青馬大橋 [九巴遊香港]"
         DATA_SHEET["routeList"]["HK2+1+KOWLOON STATION+[KMB Tour HK] TSIM SHA TSUI and TSING MA BRIDGE"]["dest"]["en"] = "Tsim Sha Tsui and Tsing Ma Bridge [KMB Tour HK]"
 
+    # Temp fix for 22X
+    try:
+        DATA_SHEET["routeList"]["22X+1+One Victoria+Kai Tak Station"]["bound"]["ctb"] = "OI"
+        DATA_SHEET["routeList"]["22X+1+One Victoria+Kai Tak Station"]["stops"]["ctb"].append(DATA_SHEET["routeList"]["22X+1+One Victoria+Kai Tak Station"]["stops"]["ctb"][0])
+        DATA_SHEET["routeList"]["22X+1+One Victoria+Kai Tak Station"]["fares"].append(DATA_SHEET["routeList"]["22X+1+One Victoria+Kai Tak Station"]["fares"][0])
+        DATA_SHEET["routeList"]["22X+1+One Victoria+Kai Tak Station"]["dest"]["zh"] += " (循環綫)"
+        DATA_SHEET["routeList"]["22X+1+One Victoria+Kai Tak Station"]["dest"]["en"] += " (Circular)"
+        del DATA_SHEET["routeList"]["22X+1+Kai Tak Station+One Victoria"]
+    except KeyError as e:
+        print(e)
+
     kmb_ops = {}
     ctb_circular = {}
     ctb_circular_ref = {}
