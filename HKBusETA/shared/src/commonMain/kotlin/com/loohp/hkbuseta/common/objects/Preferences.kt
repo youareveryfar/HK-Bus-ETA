@@ -1,8 +1,8 @@
 /*
  * This file is part of HKBusETA.
  *
- * Copyright (C) 2025. LoohpJames <jamesloohp@gmail.com>
- * Copyright (C) 2025. Contributors
+ * Copyright (C) 2026. LoohpJames <jamesloohp@gmail.com>
+ * Copyright (C) 2026. Contributors
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -57,6 +57,7 @@ class Preferences(
     var disableMarquee: Boolean,
     var disableBoldDest: Boolean,
     var receiveAlerts: Boolean,
+    var fareCategory: FareCategory,
     var historyEnabled: Boolean,
     var showRouteMap: Boolean,
     var downloadSplash: Boolean,
@@ -85,6 +86,7 @@ class Preferences(
             val disableMarquee = json.optBoolean("disableMarquee", false)
             val disableBoldDest = json.optBoolean("disableBoldDest", false)
             val receiveAlerts = json.optBoolean("receiveAlerts", false)
+            val fareCategory = FareCategory.valueOf(json.optString("fareCategory", FareCategory.ADULT.name))
             val historyEnabled = json.optBoolean("historyEnabled", true)
             val showRouteMap = json.optBoolean("showRouteMap", true)
             val downloadSplash = json.optBoolean("downloadSplash", true)
@@ -108,7 +110,7 @@ class Preferences(
             val lastLookupRoutes = ConcurrentMutableList<LastLookupRoute>().apply { addAll(json.optJsonArray("lastLookupRoutes")!!.mapToMutableList { if (it is JsonObject) (if (it.containsKey("routeKey")) LastLookupRoute.deserialize(it) else null) else LastLookupRoute.fromLegacy(it.jsonPrimitive.content) }.filterNotNull()) }
             val etaTileConfigurations = ConcurrentMutableMap<Int, List<Int>>().apply { if (json.contains("etaTileConfigurations")) putAll(json.optJsonObject("etaTileConfigurations")!!.mapToMutableMap<Int, List<Int>>({ it.toInt() }) { it.jsonArray.mapToMutableList { e -> e.jsonPrimitive.int } }) }
             val routeSortModePreference = ConcurrentMutableMap<RouteListType, RouteSortPreference>().apply { if (json.contains("routeSortModePreference")) putAll(json.optJsonObject("routeSortModePreference")!!.mapToMutableMap({ RouteListType.valueOf(it) }, { if (it is JsonPrimitive) RouteSortPreference.fromLegacy(it) else RouteSortPreference.deserialize(it.jsonObject) })) }
-            return Preferences(referenceChecksum, lastSaved, language, etaDisplayMode, lrtDirectionMode, theme, color, viewFavTab, disableMarquee, disableBoldDest, receiveAlerts, historyEnabled, showRouteMap, downloadSplash, alternateStopName, lastNearbyLocation, disableNavBarQuickActions, useExperimentalData, favouriteStops, favouriteRouteStops, lastLookupRoutes, etaTileConfigurations, routeSortModePreference)
+            return Preferences(referenceChecksum, lastSaved, language, etaDisplayMode, lrtDirectionMode, theme, color, viewFavTab, disableMarquee, disableBoldDest, receiveAlerts, fareCategory, historyEnabled, showRouteMap, downloadSplash, alternateStopName, lastNearbyLocation, disableNavBarQuickActions, useExperimentalData, favouriteStops, favouriteRouteStops, lastLookupRoutes, etaTileConfigurations, routeSortModePreference)
         }
 
         fun createDefault(): Preferences {
@@ -124,6 +126,7 @@ class Preferences(
                 disableMarquee = false,
                 disableBoldDest = false,
                 receiveAlerts = false,
+                fareCategory = FareCategory.ADULT,
                 historyEnabled = true,
                 showRouteMap = true,
                 downloadSplash = true,
@@ -153,6 +156,7 @@ class Preferences(
             this.disableMarquee = preferences.disableMarquee
             this.disableBoldDest = preferences.disableBoldDest
             this.receiveAlerts = preferences.receiveAlerts
+            this.fareCategory = preferences.fareCategory
             this.historyEnabled = preferences.historyEnabled
             this.showRouteMap = preferences.showRouteMap
             this.downloadSplash = preferences.downloadSplash
@@ -183,6 +187,7 @@ class Preferences(
             put("disableMarquee", disableMarquee)
             put("disableBoldDest", disableBoldDest)
             put("receiveAlerts", receiveAlerts)
+            put("fareCategory", fareCategory.name)
             put("historyEnabled", historyEnabled)
             put("showRouteMap", showRouteMap)
             put("downloadSplash", downloadSplash)
@@ -214,6 +219,7 @@ class Preferences(
         if (historyEnabled != other.historyEnabled) return false
         if (disableBoldDest != other.disableBoldDest) return false
         if (receiveAlerts != other.receiveAlerts) return false
+        if (fareCategory != other.fareCategory) return false
         if (showRouteMap != other.showRouteMap) return false
         if (downloadSplash != other.downloadSplash) return false
         if (alternateStopName != other.alternateStopName) return false
@@ -239,6 +245,7 @@ class Preferences(
         result = 31 * result + disableMarquee.hashCode()
         result = 31 * result + disableBoldDest.hashCode()
         result = 31 * result + receiveAlerts.hashCode()
+        result = 31 * result + fareCategory.hashCode()
         result = 31 * result + historyEnabled.hashCode()
         result = 31 * result + showRouteMap.hashCode()
         result = 31 * result + downloadSplash.hashCode()

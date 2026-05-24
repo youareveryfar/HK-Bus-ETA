@@ -1,8 +1,8 @@
 /*
  * This file is part of HKBusETA.
  *
- * Copyright (C) 2025. LoohpJames <jamesloohp@gmail.com>
- * Copyright (C) 2025. Contributors
+ * Copyright (C) 2026. LoohpJames <jamesloohp@gmail.com>
+ * Copyright (C) 2026. Contributors
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -155,6 +155,7 @@ import com.loohp.hkbuseta.common.objects.anyEquals
 import com.loohp.hkbuseta.common.objects.asBilingualText
 import com.loohp.hkbuseta.common.objects.bilingualToPrefix
 import com.loohp.hkbuseta.common.objects.component3
+import com.loohp.hkbuseta.common.objects.discountedAs
 import com.loohp.hkbuseta.common.objects.findSame
 import com.loohp.hkbuseta.common.objects.getDeepLink
 import com.loohp.hkbuseta.common.objects.getDisplayName
@@ -1669,26 +1670,30 @@ fun StopEntryExpansionEta(
                 verticalArrangement = Arrangement.Center,
                 itemVerticalAlignment = Alignment.CenterVertically
             ) {
-                if (stopData.fare(selectedBranch) != null) {
+                val calculatedFare = stopData.fare(selectedBranch)?.discountedAs(Shared.fareCategory, co, routeNumber)
+                if (calculatedFare != null) {
+                    val discountedFaresMarker = if (calculatedFare.isDiscounted) " (${calculatedFare.shortDescription[Shared.language]})" else ""
                     if (co.isFerry) {
                         PlatformText(
                             fontSize = 14.sp,
                             lineHeight = 1.3F.em,
-                            text = "${if (Shared.language == "en") "Fare: " else "票價: "} $${stopData.fare(selectedBranch)}"
+                            text = "${if (Shared.language == "en") "Fare: " else "票價: "} $${calculatedFare.fare}$discountedFaresMarker"
                         )
                     } else {
                         PlatformText(
                             fontSize = 14.sp,
                             lineHeight = 1.3F.em,
-                            text = "${if (Shared.language == "en") "Fare: " else "車費: "} $${stopData.fare(selectedBranch)}"
+                            text = "${if (Shared.language == "en") "Fare: " else "車費: "} $${calculatedFare.fare}$discountedFaresMarker"
                         )
                     }
                 }
-                if (stopData.holidayFare(selectedBranch) != null) {
+                val calculatedHolidayFare = stopData.holidayFare(selectedBranch)?.discountedAs(Shared.fareCategory, co, routeNumber)
+                if (calculatedHolidayFare != null) {
+                    val discountedHolidayFaresMarker = if (calculatedHolidayFare.isDiscounted) " (${calculatedHolidayFare.shortDescription[Shared.language]})" else ""
                     PlatformText(
                         fontSize = 14.sp,
                         lineHeight = 1.3F.em,
-                        text = "${if (Shared.language == "en") "Holiday Fare: " else "假日車費: "} $${stopData.holidayFare(selectedBranch)}"
+                        text = "${if (Shared.language == "en") "Holiday Fare: " else "假日車費: "} $${calculatedHolidayFare.fare}$discountedHolidayFaresMarker"
                     )
                 }
                 for (alert in alerts) {

@@ -1,6 +1,6 @@
 {
 	"properties": {
-		"dimension": [9000, 6000]
+		"dimension": [9000, 7000]
 	},
 	"stops": {
 		"LOW": [3744, 250],

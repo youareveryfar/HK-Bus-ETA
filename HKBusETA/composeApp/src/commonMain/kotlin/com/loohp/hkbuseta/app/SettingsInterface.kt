@@ -1,8 +1,8 @@
 /*
  * This file is part of HKBusETA.
  *
- * Copyright (C) 2025. LoohpJames <jamesloohp@gmail.com>
- * Copyright (C) 2025. Contributors
+ * Copyright (C) 2026. LoohpJames <jamesloohp@gmail.com>
+ * Copyright (C) 2026. Contributors
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -86,6 +86,7 @@ import com.loohp.hkbuseta.common.utils.pad
 import com.loohp.hkbuseta.common.utils.toLocalDateTime
 import com.loohp.hkbuseta.compose.Bolt
 import com.loohp.hkbuseta.compose.Computer
+import com.loohp.hkbuseta.compose.CurrencyExchange
 import com.loohp.hkbuseta.compose.Dangerous
 import com.loohp.hkbuseta.compose.DarkMode
 import com.loohp.hkbuseta.compose.DirectionsBus
@@ -263,6 +264,16 @@ fun SettingsInterface(instance: AppActiveContext) {
                     ETADisplayMode.CLOCK_TIME -> (if (Shared.language == "en") "Clock Time" else "時鐘時間").asAnnotatedString()
                     ETADisplayMode.CLOCK_TIME_WITH_COUNTDOWN -> (if (Shared.language == "en") "Clock Time + Countdown" else "時鐘+倒數時間").asAnnotatedString()
                 }
+            )
+            var fareCategory by remember { mutableStateOf(Shared.fareCategory) }
+            SettingsRow(
+                onClick = {
+                    Registry.getInstance(instance).setFareCategory(Shared.fareCategory.nextFareCategory, instance)
+                    fareCategory = Shared.fareCategory
+                },
+                icon = PlatformIcons.Outlined.CurrencyExchange,
+                text = (if (Shared.language == "en") "Display Fare Category" else "顯示車費類別").asAnnotatedString(),
+                subText = fareCategory.displayName[Shared.language].asAnnotatedString()
             )
             val canReceiveRemoteNotifications = remember { canReceiveRemoteNotifications(instance) }
             var receiveAlerts by remember { mutableStateOf(canReceiveRemoteNotifications && Shared.receiveAlerts) }

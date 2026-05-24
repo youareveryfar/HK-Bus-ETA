@@ -1,8 +1,8 @@
 /*
  * This file is part of HKBusETA.
  *
- * Copyright (C) 2025. LoohpJames <jamesloohp@gmail.com>
- * Copyright (C) 2025. Contributors
+ * Copyright (C) 2026. LoohpJames <jamesloohp@gmail.com>
+ * Copyright (C) 2026. Contributors
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -100,8 +100,8 @@ class Route(
             val orig = BilingualText.deserialize(json.optJsonObject("orig")!!)
             val fakeRoute = json.optBoolean("fakeRoute", false)
             val stops = json.optJsonObject("stops")!!.mapToMutableMap({ Operator.valueOf(it) }, { it.jsonArray.mapToMutableList { e -> e.jsonPrimitive.content } })
-            val fares = json.optJsonArray("fares")?.mapToMutableList { Fare(it.jsonPrimitive.content) }
-            val faresHoliday = json.optJsonArray("faresHoliday")?.mapToMutableList { Fare(it.jsonPrimitive.content) }
+            val fares = json.optJsonArray("fares")?.mapToMutableList { Fare.of(it.jsonPrimitive.content) }
+            val faresHoliday = json.optJsonArray("faresHoliday")?.mapToMutableList { Fare.of(it.jsonPrimitive.content) }
             val freq = json.optJsonObject("freq")?.mapToMutableMap { m -> m.jsonObject.mapToMutableMap { a -> (a as? JsonArray)?.mapToMutableList { e -> e.jsonPrimitive.content } } }
             val journeyTime = json.optString("jt").toIntOrNull()
             return Route(route, bound, co, serviceType, nlbId, gtfsId, ctbIsCircular, kmbCtbJoint, gmbRegion, lrtCircular, dest, orig, fakeRoute, stops, fares, faresHoliday, freq, journeyTime)
@@ -122,8 +122,8 @@ class Route(
             val orig = BilingualText.deserialize(input)
             val fakeRoute = input.readBoolean()
             val stops = input.readMap(linkedMapOf()) { Operator.valueOf(it.readString(Charsets.UTF_8)) to it.readCollection(mutableListOf()) { it1 -> it1.readString(Charsets.UTF_8) } }
-            val fares = input.readNullable { i -> i.readCollection(mutableListOf()) { Fare(it.readString(Charsets.UTF_8)) } }
-            val faresHoliday = input.readNullable { i -> i.readCollection(mutableListOf()) { Fare(it.readString(Charsets.UTF_8)) } }
+            val fares = input.readNullable { i -> i.readCollection(mutableListOf()) { Fare.of(it.readString(Charsets.UTF_8)) } }
+            val faresHoliday = input.readNullable { i -> i.readCollection(mutableListOf()) { Fare.of(it.readString(Charsets.UTF_8)) } }
             val freq = input.readNullable { n -> n.readMap(mutableMapOf()) { m -> m.readString(Charsets.UTF_8) to m.readMap(mutableMapOf()) { a -> a.readString(Charsets.UTF_8) to a.readNullable { an -> an.readCollection(mutableListOf()) { e -> e.readString(Charsets.UTF_8) } } } } }
             val journeyTime = input.readNullable { i -> i.readInt() }
             return Route(route, bound, co, serviceType, nlbId, gtfsId, ctbIsCircular, kmbCtbJoint, gmbRegion, lrtCircular, dest, orig, fakeRoute, stops, fares, faresHoliday, freq, journeyTime)

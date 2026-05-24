@@ -1,8 +1,8 @@
 /*
  * This file is part of HKBusETA.
  *
- * Copyright (C) 2025. LoohpJames <jamesloohp@gmail.com>
- * Copyright (C) 2025. Contributors
+ * Copyright (C) 2026. LoohpJames <jamesloohp@gmail.com>
+ * Copyright (C) 2026. Contributors
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -80,10 +80,7 @@ import androidx.compose.ui.unit.sp
 import com.loohp.hkbuseta.appcontext.common
 import com.loohp.hkbuseta.appcontext.composePlatform
 import com.loohp.hkbuseta.common.appcontext.AppActiveContext
-import com.loohp.hkbuseta.common.appcontext.AppIntent
-import com.loohp.hkbuseta.common.appcontext.AppScreen
 import com.loohp.hkbuseta.common.appcontext.ToastDuration
-import com.loohp.hkbuseta.common.objects.Coordinates
 import com.loohp.hkbuseta.common.objects.FavouriteStop
 import com.loohp.hkbuseta.common.objects.RadiusCenterPosition
 import com.loohp.hkbuseta.common.objects.RecentSortMode
@@ -118,7 +115,6 @@ import com.loohp.hkbuseta.compose.PlatformIcons
 import com.loohp.hkbuseta.compose.PlatformOutlinedTextField
 import com.loohp.hkbuseta.compose.PlatformSlider
 import com.loohp.hkbuseta.compose.PlatformText
-import com.loohp.hkbuseta.compose.Route
 import com.loohp.hkbuseta.compose.ScrollBarConfig
 import com.loohp.hkbuseta.compose.Search
 import com.loohp.hkbuseta.compose.Star
@@ -502,26 +498,6 @@ fun NearbyInterfaceBody(instance: AppActiveContext, visible: Boolean) {
                     .padding(10.dp),
                 horizontalArrangement = Arrangement.spacedBy(10.dp)
             ) {
-                if (Shared.JOURNEY_PLANNER_AVAILABLE) {
-                    PlatformFloatingActionButton(
-                        modifier = Modifier.plainTooltip(if (Shared.language == "en") "Journey Planner" else "行程規劃"),
-                        onClick = {
-                            val appIntent = AppIntent(instance, AppScreen.JOURNEY_PLANNER)
-                            val origin: Coordinates? = customCenterPosition?: location
-                            if (origin != null) {
-                                appIntent.putExtra("origin", origin)
-                            }
-                            instance.startActivity(appIntent)
-                        },
-                    ) {
-                        PlatformIcon(
-                            modifier = Modifier.size(27.dp),
-                            painter = PlatformIcons.Outlined.Route,
-                            contentDescription = if (Shared.language == "en") "Journey Planner" else "行程規劃",
-                            tint = LocalContentColor.current
-                        )
-                    }
-                }
                 PlatformFloatingActionButton(
                     modifier = Modifier.plainTooltip(if (Shared.language == "en") "Custom Location" else "自訂位置"),
                     onClick = { choosingCustomCenterPosition = true },

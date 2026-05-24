@@ -1,8 +1,8 @@
 /*
  * This file is part of HKBusETA.
  *
- * Copyright (C) 2025. LoohpJames <jamesloohp@gmail.com>
- * Copyright (C) 2025. Contributors
+ * Copyright (C) 2026. LoohpJames <jamesloohp@gmail.com>
+ * Copyright (C) 2026. Contributors
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -33,6 +33,7 @@ import com.loohp.hkbuseta.common.appcontext.AppScreen
 import com.loohp.hkbuseta.common.objects.AlertNotification
 import com.loohp.hkbuseta.common.objects.Coordinates
 import com.loohp.hkbuseta.common.objects.ETADisplayMode
+import com.loohp.hkbuseta.common.objects.FareCategory
 import com.loohp.hkbuseta.common.objects.FavouriteResolvedStop
 import com.loohp.hkbuseta.common.objects.FavouriteRouteGroup
 import com.loohp.hkbuseta.common.objects.FavouriteRouteStop
@@ -112,8 +113,6 @@ object Shared {
     const val TERMINATE_ALIGHT_REMINDER_ID = "/HKBusETA/TerminateAlightReminder"
     const val INVALIDATE_CACHE_ID = "/HKBusETA/InvalidateCache"
 
-    const val JOURNEY_PLANNER_AVAILABLE = false
-
     val MTR_ROUTE_FILTER: (Route) -> Boolean = { r -> r.bound.containsKey(Operator.MTR) }
     val FERRY_ROUTE_FILTER: (Route) -> Boolean = { r -> r.bound.keys.any { it.isFerry } }
     val RECENT_ROUTE_FILTER: (String, Route, Operator) -> Boolean = { k, _, _ -> lastLookupRoutes.value.any { it.routeKey == k } }
@@ -160,8 +159,18 @@ object Shared {
         kmbSubsidiary.clear()
         for ((type, list) in values) {
             for (route in list) {
-                kmbSubsidiary.put(route, type)
+                kmbSubsidiary[route] = type
             }
+        }
+    }
+
+    internal val joyyouExcludedRoute: Map<Operator, Set<String>> = mutableMapOf()
+
+    fun setJoyyouExcludedRoute(values: Map<Operator, List<String>>?) {
+        joyyouExcludedRoute as MutableMap
+        joyyouExcludedRoute.clear()
+        for ((co, list) in values?: emptyMap()) {
+            joyyouExcludedRoute[co] = list.toSet()
         }
     }
 
@@ -288,6 +297,7 @@ object Shared {
     var useExperimentalData = false
     var disableBoldDest = false
     var receiveAlerts = false
+    var fareCategory = FareCategory.ADULT
 
     val alternateStopNamesShowingState: MutableNonNullStateFlow<Boolean> = MutableStateFlow(false).wrap()
 

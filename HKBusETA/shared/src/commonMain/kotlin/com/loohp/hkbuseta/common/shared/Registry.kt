@@ -1,8 +1,8 @@
 /*
  * This file is part of HKBusETA.
  *
- * Copyright (C) 2025. LoohpJames <jamesloohp@gmail.com>
- * Copyright (C) 2025. Contributors
+ * Copyright (C) 2026. LoohpJames <jamesloohp@gmail.com>
+ * Copyright (C) 2026. Contributors
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -42,6 +42,7 @@ import com.loohp.hkbuseta.common.objects.Coordinates
 import com.loohp.hkbuseta.common.objects.DataContainer
 import com.loohp.hkbuseta.common.objects.ETADisplayMode
 import com.loohp.hkbuseta.common.objects.Fare
+import com.loohp.hkbuseta.common.objects.FareCategory
 import com.loohp.hkbuseta.common.objects.FavouriteRouteGroup
 import com.loohp.hkbuseta.common.objects.FavouriteRouteStop
 import com.loohp.hkbuseta.common.objects.FavouriteStop
@@ -120,6 +121,7 @@ import com.loohp.hkbuseta.common.utils.currentBranchStatus
 import com.loohp.hkbuseta.common.utils.currentEpochSeconds
 import com.loohp.hkbuseta.common.utils.currentLocalDateTime
 import com.loohp.hkbuseta.common.utils.currentTimeMillis
+import com.loohp.hkbuseta.common.utils.debugLog
 import com.loohp.hkbuseta.common.utils.decodeFromStringReadChannel
 import com.loohp.hkbuseta.common.utils.doRetry
 import com.loohp.hkbuseta.common.utils.editDistance
@@ -410,6 +412,7 @@ class Registry {
         Shared.disableMarquee = PREFERENCES!!.disableMarquee
         Shared.disableBoldDest = PREFERENCES!!.disableBoldDest
         Shared.receiveAlerts = PREFERENCES!!.receiveAlerts
+        Shared.fareCategory = PREFERENCES!!.fareCategory
         Shared.historyEnabled = PREFERENCES!!.historyEnabled
         Shared.showRouteMap = PREFERENCES!!.showRouteMap
         Shared.downloadSplash = PREFERENCES!!.downloadSplash
@@ -553,6 +556,12 @@ class Registry {
     fun setReceiveAlerts(receiveAlerts: Boolean, context: AppContext) {
         Shared.receiveAlerts = receiveAlerts
         PREFERENCES!!.receiveAlerts = receiveAlerts
+        savePreferences(context)
+    }
+
+    fun setFareCategory(fareCategory: FareCategory, context: AppContext) {
+        Shared.fareCategory = fareCategory
+        PREFERENCES!!.fareCategory = fareCategory
         savePreferences(context)
     }
 
@@ -814,6 +823,7 @@ class Registry {
         Shared.disableMarquee = PREFERENCES!!.disableMarquee
         Shared.disableBoldDest = PREFERENCES!!.disableBoldDest
         Shared.receiveAlerts = PREFERENCES!!.receiveAlerts
+        Shared.fareCategory = PREFERENCES!!.fareCategory
         Shared.historyEnabled = PREFERENCES!!.historyEnabled
         Shared.showRouteMap = PREFERENCES!!.showRouteMap
         Shared.disableNavBarQuickActions = PREFERENCES!!.disableNavBarQuickActions
@@ -885,6 +895,7 @@ class Registry {
                             DATA = JsonIgnoreUnknownKeys.decodeFromStringReadChannel(context.readTextFile(DATA_FILE_NAME))
                             Tiles.requestTileUpdate()
                             Shared.setKmbSubsidiary(DATA!!.kmbSubsidiary)
+                            Shared.setJoyyouExcludedRoute(DATA!!.joyyouExcluded)
                             state.value = State.READY
                         } catch (e: Throwable) {
                             e.printStackTrace()
@@ -914,6 +925,7 @@ class Registry {
                             val textResponse = getTextResponseWithPercentageCallback(dataUrl(!context.formFactor.reduceData, gzip), length, gzip) { p -> updatePercentageState.value = p * 0.85f + percentageOffset }?: throw RuntimeException("Error downloading bus data")
                             DATA = JsonIgnoreUnknownKeys.decodeFromStringReadChannel(textResponse)
                             Shared.setKmbSubsidiary(DATA!!.kmbSubsidiary)
+                            Shared.setJoyyouExcludedRoute(DATA!!.joyyouExcluded)
                             getTextResponse(lastUpdatedUrl())?.string()?.toLong()?.apply { Shared.scheduleBackgroundUpdateService(context, this) }
                         }
                         CoroutineScope(Dispatchers.IO).launch {
@@ -2873,6 +2885,7 @@ class Registry {
         }
         stopSequences.addAll(ctbStopList)
         val matchingSeq = stopSequences.minByOrNull { (it - stopIndex).absoluteValue }?: -1
+        debugLog(stopSequences, matchingSeq)
         var counter = 0
         val usedRealSeq: MutableSet<Int> = HashSet()
         for (bus in buses.asSequence().map { it.jsonObject }.sortedBy { it.optInt("eta_seq", Int.MAX_VALUE) }) {

@@ -1,8 +1,8 @@
 /*
  * This file is part of HKBusETA.
  *
- * Copyright (C) 2025. LoohpJames <jamesloohp@gmail.com>
- * Copyright (C) 2025. Contributors
+ * Copyright (C) 2026. LoohpJames <jamesloohp@gmail.com>
+ * Copyright (C) 2026. Contributors
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -1671,6 +1671,15 @@ fun MTRRouteMapInfoSheetInterface(
                         },
                         fontSize = 17.sp
                     )
+                    PlatformText(
+                        modifier = Modifier.padding(horizontal = 20.dp),
+                        text = if (Shared.language == "en") {
+                            "For QR code, and China T-Union card, corresponding Octopus fares apply. For contactless bank card, adult octopus fares apply."
+                        } else {
+                            "二維碼及全國交通一卡通適用相應八達通車費 感應式銀行卡適用成人八達通車費"
+                        },
+                        fontSize = 17.sp
+                    )
                     Spacer(modifier = Modifier.size(10.dp))
                 }?: run {
                     PlatformText(
@@ -3016,14 +3025,18 @@ fun TrainFareTableDisplay(
                 text = TicketCategory.SINGLE.displayName[Shared.language]
             )
             for (fareCategory in FareCategory.entries) {
+                val isSelectedFareCategory = Shared.fareCategory == fareCategory
+                val weight = if (isSelectedFareCategory) FontWeight.Bold else null
                 PlatformText(
                     textAlign = TextAlign.Start,
+                    fontWeight = weight,
                     lineHeight = 1.1.em,
                     fontSize = 17.sp,
                     text = fareCategory.displayName[Shared.language]
                 )
                 PlatformText(
                     textAlign = TextAlign.Center,
+                    fontWeight = weight,
                     lineHeight = 1.1.em,
                     fontSize = 17.sp,
                     text = "$${fareTable.findFare(fareCategory, TicketCategory.OCTO)?: "-"}"

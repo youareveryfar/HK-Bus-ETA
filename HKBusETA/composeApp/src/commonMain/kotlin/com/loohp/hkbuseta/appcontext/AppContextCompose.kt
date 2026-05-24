@@ -1,8 +1,8 @@
 /*
  * This file is part of HKBusETA.
  *
- * Copyright (C) 2025. LoohpJames <jamesloohp@gmail.com>
- * Copyright (C) 2025. Contributors
+ * Copyright (C) 2026. LoohpJames <jamesloohp@gmail.com>
+ * Copyright (C) 2026. Contributors
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -162,13 +162,12 @@ fun AppActiveContextCompose.newScreen() {
         AppScreen.DUMMY -> DummyInterface(this)
         AppScreen.RECENT -> RecentInterface(this)
         AppScreen.PDF -> PdfViewerInterface(this)
-//        AppScreen.JOURNEY_PLANNER -> JourneyPlannerInterface(this)
         else -> MainLoading(this, stopId = null, co = null, index = null, stop = ImmutableState(null), route = ImmutableState(null), listStopRoute = ImmutableState(null), listStopScrollToStop = null, listStopShowEta = null, listStopIsAlightReminder = null, queryKey = null, queryRouteNumber = null, queryBound = null, queryCo = null, queryDest = null, queryGMBRegion = null, queryStop = null, queryStopIndex = 0, queryStopDirectLaunch = false)
     }
 }
 
 enum class AppScreenGroup {
-    UNKNOWN, MAIN, TITLE, ROUTE_STOPS, DUMMY, RECENT, PDF, JOURNEY_PLANNER
+    UNKNOWN, MAIN, TITLE, ROUTE_STOPS, DUMMY, RECENT, PDF
 }
 
 val AppActiveContextCompose.screenGroup: AppScreenGroup get() {
@@ -179,7 +178,6 @@ val AppActiveContextCompose.screenGroup: AppScreenGroup get() {
         AppScreen.DUMMY -> AppScreenGroup.DUMMY
         AppScreen.RECENT -> AppScreenGroup.RECENT
         AppScreen.PDF -> AppScreenGroup.PDF
-        AppScreen.JOURNEY_PLANNER -> AppScreenGroup.JOURNEY_PLANNER
         else -> AppScreenGroup.UNKNOWN
     }
 }

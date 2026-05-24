@@ -1,8 +1,8 @@
 /*
  * This file is part of HKBusETA.
  *
- * Copyright (C) 2025. LoohpJames <jamesloohp@gmail.com>
- * Copyright (C) 2025. Contributors
+ * Copyright (C) 2026. LoohpJames <jamesloohp@gmail.com>
+ * Copyright (C) 2026. Contributors
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -155,6 +155,7 @@ import com.loohp.hkbuseta.common.objects.bilingualOnlyToPrefix
 import com.loohp.hkbuseta.common.objects.bilingualToPrefix
 import com.loohp.hkbuseta.common.objects.bySortModes
 import com.loohp.hkbuseta.common.objects.calculateServiceTimeCategory
+import com.loohp.hkbuseta.common.objects.discountedAs
 import com.loohp.hkbuseta.common.objects.displayName
 import com.loohp.hkbuseta.common.objects.endOfLineText
 import com.loohp.hkbuseta.common.objects.extendedDisplayName
@@ -1147,8 +1148,11 @@ fun RouteRow(
                     .filter { (_, stopData) -> stopData.branchIds.contains(route.route!!) }
                     .toList()
                     .indexOf { (index) -> index + 1 == route.stopInfoIndex } + 1
-                val fare = route.route!!.getFare(routeStopIndex, Registry.getInstance(instance).isPublicHoliday(currentLocalDateTime().date))
-                append(fare?.let { "  $$it" }?: "", SpanStyle(fontSize = TextUnit.Small))
+                val calculatedFare = route.route!!
+                    .getFare(routeStopIndex, Registry.getInstance(instance).isPublicHoliday(currentLocalDateTime().date))
+                    ?.discountedAs(Shared.fareCategory, co, routeNumber)
+                val discountedFaresMarker = if (calculatedFare?.isDiscounted == true) "*" else ""
+                append(calculatedFare?.fare?.let { "  $$it$discountedFaresMarker" }?: "", SpanStyle(fontSize = TextUnit.Small))
             })
         }
         if (co == Operator.NLB || co.isFerry || (showCircularOrigin && route.route!!.isCircular && co != Operator.CTB && co != Operator.LRT)) {

@@ -1,8 +1,8 @@
 /*
  * This file is part of HKBusETA.
  *
- * Copyright (C) 2025. LoohpJames <jamesloohp@gmail.com>
- * Copyright (C) 2025. Contributors
+ * Copyright (C) 2026. LoohpJames <jamesloohp@gmail.com>
+ * Copyright (C) 2026. Contributors
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -139,12 +139,13 @@ fun <V> JsonObject.mapToMutableMap(valueDeserializer: (JsonElement) -> V): Mutab
 fun <T> Collection<T>.toJsonArray(): JsonArray {
     return buildJsonArray { this@toJsonArray.forEach {
         when (it) {
+            null -> add(JsonNull)
             is JsonElement -> add(it)
             is Number -> add(it)
             is String -> add(it)
             is Boolean -> add(it)
             is JSONSerializable -> add(it.serialize())
-            else -> throw IllegalArgumentException()
+            else -> throw IllegalArgumentException("Unsupported item: ${it::class.simpleName}")
         }
     } }
 }
@@ -152,11 +153,12 @@ fun <T> Collection<T>.toJsonArray(): JsonArray {
 fun <T> Sequence<T>.toJsonArray(): JsonArray {
     return buildJsonArray { this@toJsonArray.forEach {
         when (it) {
+            null -> add(JsonNull)
             is JsonElement -> add(it)
             is Number -> add(it)
             is String -> add(it)
             is Boolean -> add(it)
-            else -> throw IllegalArgumentException()
+            else -> throw IllegalArgumentException("Unsupported item: ${it::class.simpleName}")
         }
     } }
 }
@@ -165,11 +167,12 @@ fun <V> Map<*, V>.toJsonObject(valueSerializer: (V) -> Any?): JsonObject {
     return buildJsonObject { this@toJsonObject.forEach { (rawKey, rawValue) ->
         val key = rawKey.toString()
         when (val value = valueSerializer.invoke(rawValue)) {
+            null -> put(key, JsonNull)
             is JsonElement -> put(key, value)
             is Number -> put(key, value)
             is String -> put(key, value)
             is Boolean -> put(key, value)
-            else -> throw IllegalArgumentException()
+            else -> throw IllegalArgumentException("Unsupported item: ${value::class.simpleName}")
         }
     } }
 }

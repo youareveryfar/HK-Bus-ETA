@@ -1,8 +1,8 @@
 /*
  * This file is part of HKBusETA.
  *
- * Copyright (C) 2025. LoohpJames <jamesloohp@gmail.com>
- * Copyright (C) 2025. Contributors
+ * Copyright (C) 2026. LoohpJames <jamesloohp@gmail.com>
+ * Copyright (C) 2026. Contributors
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -21,7 +21,6 @@
 package com.loohp.hkbuseta.common.objects
 
 import com.loohp.hkbuseta.common.utils.Immutable
-import com.loohp.hkbuseta.common.utils.toString
 import kotlinx.serialization.KSerializer
 import kotlinx.serialization.Serializable
 import kotlinx.serialization.descriptors.PrimitiveKind
@@ -32,68 +31,86 @@ import kotlinx.serialization.encoding.Encoder
 import kotlinx.serialization.json.JsonElement
 import kotlinx.serialization.json.float
 import kotlinx.serialization.json.jsonPrimitive
-import kotlin.math.ceil
+import kotlin.math.absoluteValue
+import kotlin.math.roundToInt
+import kotlin.math.roundToLong
 
 @Serializable(with = FareSerializer::class)
 @Immutable
-data class Fare(val value: Float): Number(), Comparable<Fare> {
+class Fare private constructor(val tenth: Int): Number(), Comparable<Fare> {
 
     companion object {
-        val ZERO = Fare(0F)
-    }
+        val ZERO = of(0F)
+        val TWO = of(2F)
 
-    constructor(value: String) : this(value.toFloat())
+        fun of(value: Float): Fare {
+            return Fare((value * 10).roundToInt())
+        }
 
-    constructor(value: Int) : this(value.toFloat())
+        fun of(value: String): Fare {
+            return of(value.toFloat())
+        }
 
-    val half: Fare by lazy { Fare(ceil(value * 5F) / 10F) }
+        fun of(value: Int): Fare {
+            return Fare(value * 10)
+        }
 
-    override fun toByte(): Byte {
-        return value.toInt().toByte()
     }
 
     override fun toDouble(): Double {
-        return value.toDouble()
+        return tenth / 10.0
     }
 
     override fun toFloat(): Float {
-        return value
-    }
-
-    override fun toInt(): Int {
-        return value.toInt()
+        return tenth / 10F
     }
 
     override fun toLong(): Long {
-        return value.toLong()
+        return toDouble().roundToLong()
+    }
+
+    override fun toInt(): Int {
+        return toFloat().roundToInt()
     }
 
     override fun toShort(): Short {
-        return value.toInt().toShort()
+        return toInt().toShort()
+    }
+
+    override fun toByte(): Byte {
+        return toInt().toByte()
     }
 
     override fun compareTo(other: Fare): Int {
-        return value.compareTo(other.value)
+        return tenth.compareTo(other.tenth)
     }
 
     override fun toString(): String {
-        return toString(decimalPlaces = 1)
+        return "${tenth / 10}.${(tenth % 10).absoluteValue}"
     }
 
     operator fun plus(other: Fare): Fare {
-        return Fare(value + other.value)
+        return Fare(tenth + other.tenth)
     }
 
     operator fun minus(other: Fare): Fare {
-        return Fare(value - other.value)
+        return Fare(tenth - other.tenth)
     }
 
-    operator fun times(other: Fare): Fare {
-        return Fare(value * other.value)
+    operator fun plus(other: Number): Fare {
+        return Fare((tenth + other.toFloat() * 10F).roundToInt())
     }
 
-    operator fun div(other: Fare): Fare {
-        return Fare(value / other.value)
+    operator fun minus(other: Number): Fare {
+        return Fare((tenth - other.toFloat() * 10F).roundToInt())
+    }
+
+    operator fun times(other: Number): Fare {
+        return Fare((tenth * other.toFloat()).roundToInt())
+    }
+
+    operator fun div(other: Number): Fare {
+        return Fare((tenth / other.toFloat()).roundToInt())
     }
 
 }
@@ -103,10 +120,10 @@ object FareSerializer : KSerializer<Fare> {
     override val descriptor: SerialDescriptor = PrimitiveSerialDescriptor("Fare", PrimitiveKind.STRING)
 
     override fun deserialize(decoder: Decoder): Fare {
-        return Fare(decoder.decodeSerializableValue(JsonElement.serializer()).jsonPrimitive.float)
+        return Fare.of(decoder.decodeSerializableValue(JsonElement.serializer()).jsonPrimitive.float)
     }
 
     override fun serialize(encoder: Encoder, value: Fare) {
-        encoder.encodeString(value.value.toString(decimalPlaces = 1))
+        encoder.encodeString(value.toString())
     }
 }
