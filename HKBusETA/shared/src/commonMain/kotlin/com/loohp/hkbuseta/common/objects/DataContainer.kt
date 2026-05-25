@@ -33,7 +33,7 @@ data class DataContainer(
     val kmbSubsidiary: Map<KMBSubsidiary, List<String>>,
     val routeRemarks: Map<Operator, Map<String, BilingualText>>,
     val ctbEtaStops: Map<String, Map<String, List<String>>>,
-    @ReduceDataOmitted val joyyouExcluded: Map<Operator, List<String>>? = null,
+    @ReduceDataOmitted val discountedFareRules: Map<Operator, Map<String, DiscountedFareRules>>? = null,
     @ReduceDataOmitted val lrtData: Map<String, StationInfo>? = null,
     @ReduceDataOmitted val mtrData: Map<String, StationInfo>? = null,
     @ReduceDataOmitted val mtrBarrierFreeMapping: StationBarrierFreeMapping? = null,

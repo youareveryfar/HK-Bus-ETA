@@ -32,6 +32,7 @@ import com.loohp.hkbuseta.common.appcontext.AppIntentFlag
 import com.loohp.hkbuseta.common.appcontext.AppScreen
 import com.loohp.hkbuseta.common.objects.AlertNotification
 import com.loohp.hkbuseta.common.objects.Coordinates
+import com.loohp.hkbuseta.common.objects.DiscountedFareRules
 import com.loohp.hkbuseta.common.objects.ETADisplayMode
 import com.loohp.hkbuseta.common.objects.FareCategory
 import com.loohp.hkbuseta.common.objects.FavouriteResolvedStop
@@ -164,14 +165,12 @@ object Shared {
         }
     }
 
-    internal val joyyouExcludedRoute: Map<Operator, Set<String>> = mutableMapOf()
+    internal val discountedFareRules: Map<Operator, Map<String, DiscountedFareRules>> = mutableMapOf()
 
-    fun setJoyyouExcludedRoute(values: Map<Operator, List<String>>?) {
-        joyyouExcludedRoute as MutableMap
-        joyyouExcludedRoute.clear()
-        for ((co, list) in values?: emptyMap()) {
-            joyyouExcludedRoute[co] = list.toSet()
-        }
+    fun setDiscountedFareRules(values: Map<Operator, Map<String, DiscountedFareRules>>?) {
+        discountedFareRules as MutableMap
+        discountedFareRules.clear()
+        discountedFareRules.putAll(values?: emptyMap())
     }
 
     private const val jointOperatorColorTransitionTime: Long = 5000

@@ -895,7 +895,7 @@ class Registry {
                             DATA = JsonIgnoreUnknownKeys.decodeFromStringReadChannel(context.readTextFile(DATA_FILE_NAME))
                             Tiles.requestTileUpdate()
                             Shared.setKmbSubsidiary(DATA!!.kmbSubsidiary)
-                            Shared.setJoyyouExcludedRoute(DATA!!.joyyouExcluded)
+                            Shared.setDiscountedFareRules(DATA!!.discountedFareRules)
                             state.value = State.READY
                         } catch (e: Throwable) {
                             e.printStackTrace()
@@ -925,7 +925,7 @@ class Registry {
                             val textResponse = getTextResponseWithPercentageCallback(dataUrl(!context.formFactor.reduceData, gzip), length, gzip) { p -> updatePercentageState.value = p * 0.85f + percentageOffset }?: throw RuntimeException("Error downloading bus data")
                             DATA = JsonIgnoreUnknownKeys.decodeFromStringReadChannel(textResponse)
                             Shared.setKmbSubsidiary(DATA!!.kmbSubsidiary)
-                            Shared.setJoyyouExcludedRoute(DATA!!.joyyouExcluded)
+                            Shared.setDiscountedFareRules(DATA!!.discountedFareRules)
                             getTextResponse(lastUpdatedUrl())?.string()?.toLong()?.apply { Shared.scheduleBackgroundUpdateService(context, this) }
                         }
                         CoroutineScope(Dispatchers.IO).launch {

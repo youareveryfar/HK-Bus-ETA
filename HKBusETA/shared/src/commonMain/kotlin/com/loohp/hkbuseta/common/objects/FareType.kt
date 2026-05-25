@@ -52,6 +52,57 @@ enum class FareType(
 }
 
 @Serializable
+data class DiscountedFareRules(
+    val concession: DiscountedRate = DiscountedRate.HALF,
+    val student: DiscountedRate = DiscountedRate.NO_DISCOUNT,
+    val joyyou: DiscountedRate = DiscountedRate.TWO_DOLLAR_FLAT_RATE_OR_EIGHTY_PERCENT_OFF
+) {
+   companion object {
+       val DEFAULT = DiscountedFareRules()
+
+       val OPERATOR_DEFAULT: Map<Operator, DiscountedFareRules> = mapOf(
+           Operator.MTR to DiscountedFareRules(
+               concession = DiscountedRate.HALF,
+               student = DiscountedRate.HALF,
+               joyyou = DiscountedRate.TWO_DOLLAR_FLAT_RATE_OR_EIGHTY_PERCENT_OFF
+           ),
+           Operator.LRT to DiscountedFareRules(
+               concession = DiscountedRate.HALF,
+               student = DiscountedRate.HALF,
+               joyyou = DiscountedRate.TWO_DOLLAR_FLAT_RATE_OR_EIGHTY_PERCENT_OFF
+           ),
+           Operator.GMB to DiscountedFareRules(
+               concession = DiscountedRate.NO_DISCOUNT,
+               student = DiscountedRate.NO_DISCOUNT,
+               joyyou = DiscountedRate.TWO_DOLLAR_FLAT_RATE_OR_EIGHTY_PERCENT_OFF
+           )
+       )
+   }
+}
+
+@Serializable
+data class DiscountedRate(
+    val rate: Float,
+    val minimum: Fare = Fare.ZERO
+) {
+    companion object {
+        val NO_DISCOUNT = DiscountedRate(rate = 1F)
+        val HALF = DiscountedRate(rate = 0.5F)
+        val TWO_DOLLAR_FLAT_RATE_OR_EIGHTY_PERCENT_OFF = DiscountedRate(rate = 0.2F, minimum = Fare.TWO)
+    }
+
+    val hasDiscount: Boolean get() = rate < 1F
+
+    fun <T> apply(standardFare: Fare, discounted: Fare.() -> T, standard: Fare.() -> T): T {
+        return if (hasDiscount) {
+            discounted.invoke(maxOf(standardFare * rate, minimum))
+        } else {
+            standard.invoke(standardFare)
+        }
+    }
+}
+
+@Serializable
 enum class FareCategory(
     val displayName: BilingualText,
     val formula: DiscountedFaresFormula,
@@ -59,42 +110,46 @@ enum class FareCategory(
 
     ADULT(
         displayName = "成人" withEn "Adult",
-        formula = { _, _ -> toResult(shortDescription = "正價" withEn "Standard", isDiscounted = false) }
+        formula = { toResult(shortDescription = "正價" withEn "Standard", isDiscounted = false) }
     ),
     CHILD(
         displayName = "小童" withEn "Child",
-        formula = { _, _ -> (this * 0.5F).toResult(shortDescription = "特惠" withEn "Concession", isDiscounted = true) }
+        formula = {
+            it.concession.apply(
+                standardFare = this,
+                discounted = { toResult(shortDescription = "特惠" withEn "Concession", isDiscounted = true) },
+                standard = { discountedAs(ADULT, it) }
+            )
+        }
     ),
     ELDERLY(
         displayName = "長者/樂悠卡(65歲或以上)" withEn "Elderly/JoyYou Card (Aged 65 or above)",
-        formula = { co, routeNumber ->
-            minOf(discountedAs(CHILD, co, routeNumber), discountedAs(JOYYOU_SIXTY, co, routeNumber))
+        formula = {
+            minOf(discountedAs(CHILD, it), discountedAs(JOYYOU_SIXTY, it))
         }
     ),
     JOYYOU_SIXTY(
         displayName = "樂悠卡(60至64歲)" withEn "JoyYou Card (Aged 60 - 64)",
-        formula = { co, routeNumber ->
-            if (isJoyyouExcluded(co, routeNumber)) {
-                discountedAs(ADULT, co, routeNumber)
-            } else {
-                maxOf(Fare.TWO, this * 0.2F).toResult(shortDescription = "樂悠" withEn "JoyYou", isDiscounted = true)
-            }
+        formula = {
+            it.joyyou.apply(
+                standardFare = this,
+                discounted = { toResult(shortDescription = "樂悠" withEn "JoyYou", isDiscounted = true) },
+                standard = { discountedAs(ADULT, it) }
+            )
         }
     ),
     PWD(
         displayName = "殘疾人士" withEn "Persons with Disabilities",
-        formula = { co, routeNumber ->
-            discountedAs(JOYYOU_SIXTY, co, routeNumber).copy(shortDescription = "殘疾" withEn "Disabilities")
-        }
+        formula = { discountedAs(JOYYOU_SIXTY, it).copy(shortDescription = "殘疾" withEn "Disabilities") }
     ),
     STUDENT(
         displayName = "學生" withEn "Student",
-        formula = { co, routeNumber ->
-            if (co.isTrain) {
-                discountedAs(CHILD, co, routeNumber).copy(shortDescription = "學生" withEn "Student")
-            } else {
-                discountedAs(ADULT, co, routeNumber)
-            }
+        formula = {
+            it.student.apply(
+                standardFare = this,
+                discounted = { toResult(shortDescription = "學生" withEn "Student", isDiscounted = true) },
+                standard = { discountedAs(ADULT, it) }
+            )
         }
     );
 
@@ -102,7 +157,7 @@ enum class FareCategory(
 }
 
 fun interface DiscountedFaresFormula {
-    fun Fare.calculate(co: Operator, routeNumber: String): DiscountedFaresResult
+    fun Fare.calculate(rules: DiscountedFareRules): DiscountedFaresResult
 }
 
 private fun Fare.toResult(shortDescription: BilingualText, isDiscounted: Boolean): DiscountedFaresResult {
@@ -120,11 +175,17 @@ data class DiscountedFaresResult(
 }
 
 fun Fare.discountedAs(fareCategory: FareCategory, co: Operator, routeNumber: String): DiscountedFaresResult {
-    return fareCategory.formula.run { calculate(co, routeNumber) }
+    return discountedAs(fareCategory, getDiscountedFareRules(co, routeNumber))
 }
 
-fun isJoyyouExcluded(co: Operator, routeNumber: String): Boolean {
-    return Shared.joyyouExcludedRoute[co]?.contains(routeNumber) == true
+fun Fare.discountedAs(fareCategory: FareCategory, rules: DiscountedFareRules): DiscountedFaresResult {
+    return fareCategory.formula.run { calculate(rules) }
+}
+
+fun getDiscountedFareRules(co: Operator, routeNumber: String): DiscountedFareRules {
+    return Shared.discountedFareRules[co]?.get(routeNumber)
+        ?: DiscountedFareRules.OPERATOR_DEFAULT[co]
+        ?: DiscountedFareRules.DEFAULT
 }
 
 enum class TicketCategory(
