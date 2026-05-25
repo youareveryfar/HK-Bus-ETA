@@ -86,11 +86,6 @@ def haversine(lat1, lon1, lat2, lon2):
     return 6371.0 * c
 
 
-def append_distinct(lst, value):
-    if value not in lst:
-        lst.append(value)
-
-
 # ===========================
 
 
@@ -109,7 +104,7 @@ MTR_FACILITIES_MAPPING = []
 LRT_DATA = {}
 TRAFFIC_SNAPSHOTS = []
 CTB_ETA_STOPS = {}
-JOYYOU_EXCLUDED_ROUTES = {}
+DISCOUNTED_FARE_RULES = {}
 
 MISSING_ROUTES = {}
 
@@ -1800,12 +1795,24 @@ def add_ctb_eta_stops():
         pass
 
 
-def add_joyyou_excluded_routes():
-    global JOYYOU_EXCLUDED_ROUTES
+def add_discounted_fare_rules():
+    global DISCOUNTED_FARE_RULES
 
-    JOYYOU_EXCLUDED_ROUTES["kmb"] = ["101R", "102R"]
-    JOYYOU_EXCLUDED_ROUTES["ctb"] = ["101R", "102R", "61R", "88R"]
-    JOYYOU_EXCLUDED_ROUTES["nlb"] = []
+    joyyou_excluded_data = {"joyyou": {"rate": 1.0}}
+    student_included_data = {"student": {"rate": 0.5}}
+
+    DISCOUNTED_FARE_RULES["kmb"] = {
+        "101R": joyyou_excluded_data,
+        "102R": joyyou_excluded_data
+    }
+    DISCOUNTED_FARE_RULES["ctb"] = {
+        "101R": joyyou_excluded_data,
+        "102R": joyyou_excluded_data,
+        "61R": joyyou_excluded_data,
+        "88R": joyyou_excluded_data
+    }
+    DISCOUNTED_FARE_RULES["nlb"] = {}
+    DISCOUNTED_FARE_RULES["mtr-bus"] = {}
 
     for data in DATA_SHEET["routeList"].values():
         route = data["route"]
@@ -1813,23 +1820,26 @@ def add_joyyou_excluded_routes():
 
         if route.startswith("A") or route.startswith("NA"):
             for co in co_list:
-                if co in JOYYOU_EXCLUDED_ROUTES:
-                    append_distinct(JOYYOU_EXCLUDED_ROUTES[co], route)
+                if co in DISCOUNTED_FARE_RULES:
+                    DISCOUNTED_FARE_RULES[co][route] = joyyou_excluded_data
 
         if "kmb" in co_list and route.startswith("PB"):
-            append_distinct(JOYYOU_EXCLUDED_ROUTES["kmb"], route)
+            DISCOUNTED_FARE_RULES["kmb"][route] = joyyou_excluded_data
 
         if "kmb" in co_list and route.startswith("P"):
-            append_distinct(JOYYOU_EXCLUDED_ROUTES["kmb"], route)
+            DISCOUNTED_FARE_RULES["kmb"][route] = joyyou_excluded_data
 
         if "kmb" in co_list and re.match(r"^8[0-9]{2}$", route):
-            append_distinct(JOYYOU_EXCLUDED_ROUTES["kmb"], route)
+            DISCOUNTED_FARE_RULES["kmb"][route] = joyyou_excluded_data
 
         if "kmb" in co_list and route.startswith("HK"):
-            append_distinct(JOYYOU_EXCLUDED_ROUTES["kmb"], route)
+            DISCOUNTED_FARE_RULES["kmb"][route] = joyyou_excluded_data
 
         if "ctb" in co_list and route.startswith("H"):
-            append_distinct(JOYYOU_EXCLUDED_ROUTES["ctb"], route)
+            DISCOUNTED_FARE_RULES["ctb"][route] = joyyou_excluded_data
+
+        if "mtr-bus" in co_list and not route.startswith("K1"):
+            DISCOUNTED_FARE_RULES["mtr-bus"][route] = student_included_data
 
 
 if IS_EXPERIMENTAL:
@@ -1873,15 +1883,15 @@ print("Searching & Injecting GMB Region")
 inject_gmb_region()
 print("Added CTB ETA Stops")
 add_ctb_eta_stops()
-print("Added Joyyou Excluded Routes")
-add_joyyou_excluded_routes()
+print("Added Discounted Fare Rules")
+add_discounted_fare_rules()
 
 output = {
     "dataSheet": DATA_SHEET,
     "mtrBusStopAlias": MTR_BUS_STOP_ALIAS,
     "busRoute": sorted(BUS_ROUTE.keys()),
     "routeRemarks": ROUTE_REMARKS,
-    "joyyouExcluded": JOYYOU_EXCLUDED_ROUTES,
+    "discountedFareRules": DISCOUNTED_FARE_RULES,
     "kmbSubsidiary": {key: sorted(value) for key, value in KMB_SUBSIDIARY_ROUTES.items()},
     "mtrData": MTR_DATA,
     "mtrBarrierFreeMapping": MTR_BARRIER_FREE_MAPPING,
@@ -1907,7 +1917,7 @@ with open(DATA_SHEET_FULL_FORMATTED_FILE_NAME, "w", encoding="utf-8") as f:
     json.dump(output, f, sort_keys=True, ensure_ascii=False, separators=(',', ':'), indent=4)
 
 strip_data_sheet(DATA_SHEET)
-del output["joyyouExcluded"]
+del output["discountedFareRules"]
 del output["mtrData"]
 del output["mtrBarrierFreeMapping"]
 del output["mtrFacilitiesMapping"]
