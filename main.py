@@ -1829,7 +1829,7 @@ def add_discounted_fare_rules():
         if "kmb" in co_list and route.startswith("P"):
             DISCOUNTED_FARE_RULES["kmb"][route] = joyyou_excluded_data
 
-        if "kmb" in co_list and re.match(r"^8[0-9]{2}$", route):
+        if "kmb" in co_list and re.match(r"^8[0-9]{2}[a-zA-Z]?$", route):
             DISCOUNTED_FARE_RULES["kmb"][route] = joyyou_excluded_data
 
         if "kmb" in co_list and route.startswith("HK"):
