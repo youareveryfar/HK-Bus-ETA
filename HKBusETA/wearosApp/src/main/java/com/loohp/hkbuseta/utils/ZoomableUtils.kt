@@ -111,7 +111,3 @@ data class PredefinedScalesCalculator(
 fun ScalesCalculator.Companion.predefined(minScale: Float, mediumScale: Float, maxScale: Float): PredefinedScalesCalculator {
     return PredefinedScalesCalculator(minScale, mediumScale, maxScale)
 }
-
-fun ImageRequest.Builder.unrestrictedBitmapSize(): ImageRequest. Builder {
-    return maxBitmapSize(coil3.size.Size(Dimension.Undefined, Dimension.Undefined))
-}

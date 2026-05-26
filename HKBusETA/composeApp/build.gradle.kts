@@ -143,6 +143,7 @@ kotlin {
             implementation(libs.coil.compose)
             implementation(libs.coil.network.ktor)
             implementation(libs.zoomimage.compose.coil3)
+            implementation(libs.zoomimage.compose.resources)
         }
         iosMain.dependencies {
             implementation(projects.shared)
@@ -191,7 +192,7 @@ android {
         minSdk = 26
         //noinspection OldTargetApi
         targetSdk = 36
-        versionCode = 1254
+        versionCode = 1258
         versionName = "2.7.0"
     }
     packaging {

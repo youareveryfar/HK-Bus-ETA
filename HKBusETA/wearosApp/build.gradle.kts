@@ -55,7 +55,7 @@ android {
         applicationId = "com.loohp.hkbuseta"
         minSdk = 30
         targetSdk = 36
-        versionCode = 1255
+        versionCode = 1262
         versionName = "2.7.0"
         vectorDrawables {
             useSupportLibrary = true
@@ -138,6 +138,7 @@ dependencies {
     implementation(libs.ktor.client.android)
     implementation(libs.zoomable)
     implementation(libs.zoomimage.compose.coil3)
+    implementation(libs.zoomimage.compose.resources)
     implementation(libs.kotlinx.coroutines.guava)
     implementation(libs.horologist.compose.layout)
     implementation(project.dependencies.platform(libs.firebase.bom))

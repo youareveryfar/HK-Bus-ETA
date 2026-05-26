@@ -105,6 +105,7 @@ import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.geometry.Size
 import androidx.compose.ui.geometry.center
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.FilterQuality
 import androidx.compose.ui.graphics.PathEffect
 import androidx.compose.ui.graphics.drawscope.Fill
 import androidx.compose.ui.graphics.drawscope.Stroke
@@ -131,10 +132,10 @@ import androidx.compose.ui.unit.sp
 import androidx.compose.ui.zIndex
 import coil3.compose.LocalPlatformContext
 import coil3.request.ImageRequest
-import coil3.size.SizeResolver
 import com.github.panpf.zoomimage.CoilZoomAsyncImage
 import com.github.panpf.zoomimage.CoilZoomState
 import com.github.panpf.zoomimage.rememberCoilZoomState
+import com.github.panpf.zoomimage.subsampling.ImageSource
 import com.github.panpf.zoomimage.zoom.DefaultMouseWheelScaleCalculator
 import com.github.panpf.zoomimage.zoom.ScalesCalculator
 import com.loohp.hkbuseta.appcontext.AppScreenGroup
@@ -275,6 +276,7 @@ import com.loohp.hkbuseta.utils.coordinatesNullableStateSaver
 import com.loohp.hkbuseta.utils.dp
 import com.loohp.hkbuseta.utils.equivalentDp
 import com.loohp.hkbuseta.utils.fontScaledDp
+import com.loohp.hkbuseta.utils.fromResourcePath
 import com.loohp.hkbuseta.utils.getGPSLocation
 import com.loohp.hkbuseta.utils.getLineColor
 import com.loohp.hkbuseta.utils.getOperatorColor
@@ -284,7 +286,6 @@ import com.loohp.hkbuseta.utils.realPointToContentPoint
 import com.loohp.hkbuseta.utils.realPointToTouchPoint
 import com.loohp.hkbuseta.utils.renderedSize
 import com.loohp.hkbuseta.utils.touchPointToRealPoint
-import com.loohp.hkbuseta.utils.unrestrictedBitmapSize
 import com.loohp.hkbuseta.utils.withAlpha
 import kotlinx.collections.immutable.ImmutableList
 import kotlinx.collections.immutable.ImmutableMap
@@ -408,6 +409,9 @@ fun RouteMapSearchInterface(
     val haptics = LocalHapticFeedback.current
 
     var stopLaunch: String? by remember { mutableStateOf(null) }
+
+    val mtrRouteMapLoadedValue by mtrRouteMapLoaded.collectAsStateMultiplatform()
+    val lightRailRouteMapLoadedValue by lightRailRouteMapLoaded.collectAsStateMultiplatform()
 
     LaunchedEffect (visible) {
         if (visible) {
@@ -583,7 +587,7 @@ fun RouteMapSearchInterface(
             modifier = Modifier.weight(1F),
             contentAlignment = Alignment.TopCenter,
         ) {
-            if (visible || (pagerState.currentPage == 0 && mtrRouteMapLoaded.value) || (pagerState.currentPage == 1 && lightRailRouteMapLoaded.value) || pagerState.currentPage == 2) {
+            if (visible || (pagerState.currentPage == 0 && mtrRouteMapLoadedValue) || (pagerState.currentPage == 1 && lightRailRouteMapLoadedValue) || pagerState.currentPage == 2) {
                 Column {
                     ComposeShared.AnimatedVisibilityColumnAppAlert(
                         context = instance,
@@ -778,7 +782,7 @@ enum class StationInfoSheetType(
     )
 }
 
-private val mtrRouteMapZoomState: MutableStateFlow<ZoomState> = MutableStateFlow(ZoomState(if (composePlatform.hasLargeScreen) 0.7F else 1F, null))
+private val mtrRouteMapZoomState: MutableStateFlow<ZoomState> = MutableStateFlow(ZoomState(1F, null))
 private val mtrRouteMapLocationJumpedState: MutableStateFlow<Boolean> = MutableStateFlow(false)
 private val mtrRouteMapSelectedStopIdState: MutableStateFlow<String?> = MutableStateFlow(null)
 private val mtrRouteMapShowingSheetState: MutableStateFlow<Boolean> = MutableStateFlow(false)
@@ -795,6 +799,7 @@ fun MTRRouteMapInterface(
     isPreview: Boolean,
     visible: Boolean
 ) {
+    val scope = rememberCoroutineScope()
     var zoomState by mtrRouteMapZoomState.collectAsStateMultiplatform()
     val state = rememberCoilZoomState()
     var mtrRouteMapData by mtrRouteMapDataState.collectAsStateMultiplatform()
@@ -817,20 +822,21 @@ fun MTRRouteMapInterface(
 
     var setScale by remember(loaded) { mutableStateOf(false) }
 
-    LaunchedEffect (Unit) {
-        state.zoomable.apply {
-            setThreeStepScale(true)
-            setMouseWheelScaleCalculator(DefaultMouseWheelScaleCalculator(stepScaleFactor = 0.05F))
-            setScalesCalculator(ScalesCalculator.predefined(
-                minScale = 0.7F,
-                mediumScale = 1F,
-                maxScale = 1.5F
-            ))
-        }
-    }
     LaunchedEffect (loaded) {
         if (loaded) {
+            val originalWidth = mtrRouteMapData!!.dimension.width
+            val previewWidth = state.zoomable.contentSize.width
+            val ratio = originalWidth / previewWidth
+
             state.zoomable.apply {
+                setThreeStepScale(true)
+                setMouseWheelScaleCalculator(DefaultMouseWheelScaleCalculator(stepScaleFactor = 0.01F * ratio))
+                setScalesCalculator(ScalesCalculator.predefined(
+                    minScale = 0.5F * ratio,
+                    mediumScale = 0.7F * ratio,
+                    maxScale = 1.2F * ratio
+                ))
+
                 delay(50)
                 zoomState.offset?.let {
                     scale(zoomState.scale)
@@ -838,7 +844,7 @@ fun MTRRouteMapInterface(
                 }?: run {
                     val dimension = mtrRouteMapData?.dimension?: Size.Zero
                     val offset = state.zoomable.realPointToContentPoint(dimension.center, dimension)
-                    locate(offset.round(), zoomState.scale)
+                    locate(offset.round(), mediumScale)
                 }
                 setScale = true
             }
@@ -959,7 +965,14 @@ fun MTRRouteMapMapInterface(
     var loaded by loadedState
     var isPressing by remember { mutableStateOf(false) }
 
-    val path = getResourceUri("routemaps/mtr_system_map${if (Shared.theme.isDarkMode) "_dark" else ""}${if (typhoonInfo.isAboveTyphoonSignalNine) "_typhoon" else ""}.png")
+    val resPath = "routemaps/mtr_system_map${if (Shared.theme.isDarkMode) "_dark" else ""}${if (typhoonInfo.isAboveTyphoonSignalNine) "_typhoon" else ""}.png"
+    val path = getResourceUri(resPath)
+
+    LaunchedEffect (loaded) {
+        if (loaded) {
+            state.setSubsamplingImage(ImageSource.fromResourcePath(resPath))
+        }
+    }
 
     mtrRouteMapData?.let { data ->
         CoilZoomAsyncImage(
@@ -1044,9 +1057,8 @@ fun MTRRouteMapMapInterface(
                 },
             model = ImageRequest.Builder(LocalPlatformContext.current)
                 .data(path)
-                .unrestrictedBitmapSize()
-                .size(SizeResolver.ORIGINAL)
                 .build(),
+            filterQuality = FilterQuality.High,
             onSuccess = { scope.launch { loaded = true } },
             scrollBar = null,
             zoomState = state,
@@ -1868,7 +1880,7 @@ fun MTRRouteMapInfoSheetInterface(
     }
 }
 
-private val lrtRouteMapZoomState: MutableStateFlow<ZoomState> = MutableStateFlow(ZoomState(0.8F, null))
+private val lrtRouteMapZoomState: MutableStateFlow<ZoomState> = MutableStateFlow(ZoomState(1F, null))
 private val lrtRouteMapLocationJumpedState: MutableStateFlow<Boolean> = MutableStateFlow(false)
 private val lrtRouteMapSelectedStopIdState: MutableStateFlow<String?> = MutableStateFlow(null)
 private val lrtRouteMapShowingSheetState: MutableStateFlow<Boolean> = MutableStateFlow(false)
@@ -1905,20 +1917,21 @@ fun LRTRouteMapInterface(
 
     var setScale by remember(loaded) { mutableStateOf(false) }
 
-    LaunchedEffect (Unit) {
-        state.zoomable.apply {
-            setThreeStepScale(true)
-            setMouseWheelScaleCalculator(DefaultMouseWheelScaleCalculator(stepScaleFactor = 0.05F))
-            setScalesCalculator(ScalesCalculator.predefined(
-                minScale = 0.8F,
-                mediumScale = 1F,
-                maxScale = 1.5F
-            ))
-        }
-    }
     LaunchedEffect (loaded) {
         if (loaded) {
+            val originalWidth = lightRailRouteMapData!!.dimension.width
+            val previewWidth = state.zoomable.contentSize.width
+            val ratio = originalWidth / previewWidth
+
             state.zoomable.apply {
+                setThreeStepScale(true)
+                setMouseWheelScaleCalculator(DefaultMouseWheelScaleCalculator(stepScaleFactor = 0.005F * ratio))
+                setScalesCalculator(ScalesCalculator.predefined(
+                    minScale = 0.1F * ratio,
+                    mediumScale = 0.3F * ratio,
+                    maxScale = 0.6F * ratio
+                ))
+
                 delay(50)
                 zoomState.offset?.let {
                     scale(zoomState.scale)
@@ -1926,7 +1939,7 @@ fun LRTRouteMapInterface(
                 }?: run {
                     val dimension = lightRailRouteMapData?.dimension?: Size.Zero
                     val offset = state.zoomable.realPointToContentPoint(dimension.center, dimension)
-                    locate(offset.round(), zoomState.scale)
+                    locate(offset.round(), mediumScale)
                 }
                 setScale = true
             }
@@ -2045,7 +2058,14 @@ fun LRTRouteMapMapInterface(
     var loaded by loadedState
     var isPressing by remember { mutableStateOf(false) }
 
-    val path = getResourceUri("routemaps/light_rail_system_map${if (Shared.theme.isDarkMode) "_dark" else ""}.png")
+    val resPath = "routemaps/light_rail_system_map${if (Shared.theme.isDarkMode) "_dark" else ""}.png"
+    val path = getResourceUri(resPath)
+
+    LaunchedEffect (loaded) {
+        if (loaded) {
+            state.setSubsamplingImage(ImageSource.fromResourcePath(resPath))
+        }
+    }
 
     lightRailRouteMapData?.let { data ->
         CoilZoomAsyncImage(
@@ -2130,8 +2150,6 @@ fun LRTRouteMapMapInterface(
                 },
             model = ImageRequest.Builder(LocalPlatformContext.current)
                 .data(path)
-                .unrestrictedBitmapSize()
-                .size(SizeResolver.ORIGINAL)
                 .build(),
             onSuccess = { scope.launch { loaded = true } },
             scrollBar = null,

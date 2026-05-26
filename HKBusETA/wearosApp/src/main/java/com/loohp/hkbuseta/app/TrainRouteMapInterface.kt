@@ -20,8 +20,6 @@
 
 package com.loohp.hkbuseta.app
 
-import android.content.Context
-import android.graphics.BitmapFactory
 import androidx.compose.animation.Crossfade
 import androidx.compose.animation.ExperimentalAnimationApi
 import androidx.compose.animation.core.FastOutSlowInEasing
@@ -70,17 +68,11 @@ import androidx.compose.ui.unit.roundToIntSize
 import androidx.wear.compose.foundation.ExperimentalWearFoundationApi
 import androidx.wear.compose.foundation.requestFocusOnHierarchyActive
 import coil3.compose.AsyncImage
-import coil3.compose.LocalPlatformContext
-import coil3.imageLoader
 import coil3.request.ImageRequest
-import coil3.size.SizeResolver
 import com.github.panpf.zoomimage.compose.rememberZoomState
 import com.github.panpf.zoomimage.compose.zoom.zoom
-import com.github.panpf.zoomimage.subsampling.ImageInfo
 import com.github.panpf.zoomimage.subsampling.ImageSource
-import com.github.panpf.zoomimage.subsampling.fromByteArray
-import com.github.panpf.zoomimage.subsampling.size
-import com.github.panpf.zoomimage.util.IntSizeCompat
+import com.github.panpf.zoomimage.subsampling.fromResource
 import com.github.panpf.zoomimage.zoom.ScalesCalculator
 import com.loohp.hkbuseta.R
 import com.loohp.hkbuseta.appcontext.context
@@ -113,10 +105,6 @@ import com.loohp.hkbuseta.utils.realPointToContentPoint
 import com.loohp.hkbuseta.utils.realPointToTouchPoint
 import com.loohp.hkbuseta.utils.scaledSize
 import com.loohp.hkbuseta.utils.touchPointToRealPoint
-import com.loohp.hkbuseta.utils.unrestrictedBitmapSize
-import kotlinx.coroutines.CoroutineScope
-import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.async
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.launch
@@ -126,7 +114,6 @@ import kotlinx.serialization.json.JsonObject
 import kotlinx.serialization.json.decodeFromStream
 import kotlinx.serialization.json.jsonArray
 import java.io.InputStream
-import java.util.concurrent.ConcurrentHashMap
 
 
 enum class TrainRouteMapType {
@@ -138,24 +125,6 @@ enum class TrainRouteMapType {
             return entries.firstOrNull { it.name.equals(name, true) }
         }
     }
-}
-
-private fun loadImageRequest(resId: Int, context: Context): ImageRequest {
-    return ImageRequest.Builder(context)
-        .data(resId)
-        .unrestrictedBitmapSize()
-        .size(SizeResolver.ORIGINAL)
-        .build()
-        .apply { context.imageLoader.enqueue(this) }
-}
-
-private data class ImageData(
-    val resId: Int,
-    val imageRequest: ImageRequest
-)
-
-private fun Int.asImageData(context: Context): ImageData {
-    return ImageData(this, loadImageRequest(this, context))
 }
 
 @Immutable
@@ -235,19 +204,20 @@ fun MTRRouteMapInterface(instance: AppActiveContext, ambientMode: Boolean) {
         }
     }
 
-    LaunchedEffect (Unit) {
-        state.zoomable.apply {
-            setThreeStepScale(true)
-            setScalesCalculator(ScalesCalculator.predefined(
-                minScale = 0.5F,
-                mediumScale = 1.0F,
-                maxScale = 1.3F
-            ))
-        }
-    }
     LaunchedEffect (loaded) {
         if (loaded) {
+            val originalWidth = mtrRouteMapData!!.dimension.width
+            val previewWidth = state.zoomable.contentSize.width
+            val ratio = originalWidth / previewWidth
+
             state.zoomable.apply {
+                setThreeStepScale(true)
+                setScalesCalculator(ScalesCalculator.predefined(
+                    minScale = 0.1F * ratio,
+                    mediumScale = 0.3F * ratio,
+                    maxScale = 0.5F * ratio
+                ))
+
                 delay(50)
                 zoomState.offset?.let {
                     scale(zoomState.scale)
@@ -255,7 +225,7 @@ fun MTRRouteMapInterface(instance: AppActiveContext, ambientMode: Boolean) {
                 }?: run {
                     val dimension = mtrRouteMapData?.dimension?: Size.Zero
                     val offset = state.zoomable.realPointToContentPoint(dimension.center, dimension)
-                    locate(offset.round(), zoomState.scale)
+                    locate(offset.round(), mediumScale)
                 }
                 setScale = true
             }
@@ -321,40 +291,29 @@ fun MTRRouteMapMapInterface(
     val closestStop by closestStopState
     var loaded by loadedState
 
-    val platformContext = LocalPlatformContext.current
     val context = LocalContext.current
 
     val resources = mapOf(
-        false to (if (typhoonInfo.isAboveTyphoonSignalNine) R.mipmap.mtr_system_map_watch_typhoon else R.mipmap.mtr_system_map_watch).asImageData(platformContext),
-        true to (if (typhoonInfo.isAboveTyphoonSignalNine) R.mipmap.mtr_system_map_watch_typhoon_ambient else R.mipmap.mtr_system_map_watch_ambient).asImageData(platformContext)
+        false to (if (typhoonInfo.isAboveTyphoonSignalNine) R.mipmap.mtr_system_map_watch_typhoon else R.mipmap.mtr_system_map_watch),
+        true to (if (typhoonInfo.isAboveTyphoonSignalNine) R.mipmap.mtr_system_map_watch_typhoon_ambient else R.mipmap.mtr_system_map_watch_ambient)
     )
-
-    val sizeCache = remember { ConcurrentHashMap<Int, Pair<ByteArray, IntSizeCompat>>() }
-    LaunchedEffect (Unit) {
-        CoroutineScope(Dispatchers.IO).launch {
-            val (resId) = resources[!ambientMode]!!
-            sizeCache.computeIfAbsent(resId) {
-                context.resources.openRawResource(resId).use { it.readBytes() } to BitmapFactory.decodeResource(context.resources, resId).size
-            }
-        }
-    }
 
     val transition = updateTransition(
         targetState = ambientMode to resources[ambientMode]!!,
         label = "MTRRouteMapAmbientCrossfade"
     )
 
-    LaunchedEffect (transition.currentState) {
-        val (resId) = transition.currentState.second
-        val (bytes, size) = CoroutineScope(Dispatchers.IO).async {
-            sizeCache.computeIfAbsent(resId) {
-                context.resources.openRawResource(resId).use { it.readBytes() } to BitmapFactory.decodeResource(context.resources, resId).size
-            }
-        }.await()
-        state.setSubsamplingImage(
-            imageSource = ImageSource.fromByteArray(bytes),
-            imageInfo = ImageInfo(size, "image/png")
-        )
+    LaunchedEffect (transition.targetState) {
+        loaded = false
+    }
+
+    LaunchedEffect (loaded) {
+        if (loaded) {
+            val resId = transition.currentState.second
+            state.setSubsamplingImage(
+                imageSource = ImageSource.fromResource(context, resId)
+            )
+        }
     }
 
     Box(
@@ -441,7 +400,7 @@ fun MTRRouteMapMapInterface(
                         easing = FastOutSlowInEasing
                     ),
                     contentKey = { (a) -> a },
-                ) { (_, imageData) ->
+                ) { (_, resId) ->
                     AsyncImage(
                         modifier = Modifier
                             .matchParentSize()
@@ -452,7 +411,9 @@ fun MTRRouteMapMapInterface(
                                     placeable.place(placeable.width / 2, placeable.height / 2)
                                 }
                             },
-                        model = imageData.imageRequest,
+                        model = ImageRequest.Builder(context)
+                            .data(resId)
+                            .build(),
                         onSuccess = {
                             scope.launch { loaded = true }
                             state.zoomable.setContentSize(it.painter.intrinsicSize.roundToIntSize())
@@ -506,19 +467,20 @@ fun LRTRouteMapInterface(instance: AppActiveContext, ambientMode: Boolean) {
         }
     }
 
-    LaunchedEffect (Unit) {
-        state.zoomable.apply {
-            setThreeStepScale(true)
-            setScalesCalculator(ScalesCalculator.predefined(
-                minScale = 0.5F,
-                mediumScale = 0.9F,
-                maxScale = 1.2F
-            ))
-        }
-    }
     LaunchedEffect (loaded) {
         if (loaded) {
+            val originalWidth = lrtRouteMapData!!.dimension.width
+            val previewWidth = state.zoomable.contentSize.width
+            val ratio = originalWidth / previewWidth
+
             state.zoomable.apply {
+                setThreeStepScale(true)
+                setScalesCalculator(ScalesCalculator.predefined(
+                    minScale = 0.1F * ratio,
+                    mediumScale = 0.14F * ratio,
+                    maxScale = 0.2F * ratio
+                ))
+
                 delay(50)
                 zoomState.offset?.let {
                     scale(zoomState.scale)
@@ -526,7 +488,7 @@ fun LRTRouteMapInterface(instance: AppActiveContext, ambientMode: Boolean) {
                 }?: run {
                     val dimension = lrtRouteMapData?.dimension?: Size.Zero
                     val offset = state.zoomable.realPointToContentPoint(dimension.center, dimension)
-                    locate(offset.round(), zoomState.scale)
+                    locate(offset.round(), mediumScale)
                 }
                 setScale = true
             }
@@ -591,40 +553,29 @@ fun LRTRouteMapMapInterface(
     val closestStop by closestStopState
     var loaded by loadedState
 
-    val platformContext = LocalPlatformContext.current
     val context = LocalContext.current
 
     val resources = mapOf(
-        false to R.mipmap.light_rail_system_map_watch.asImageData(platformContext),
-        true to R.mipmap.light_rail_system_map_watch_ambient.asImageData(platformContext)
+        false to R.mipmap.light_rail_system_map_watch,
+        true to R.mipmap.light_rail_system_map_watch_ambient
     )
-
-    val sizeCache = remember { ConcurrentHashMap<Int, Pair<ByteArray, IntSizeCompat>>() }
-    LaunchedEffect (Unit) {
-        CoroutineScope(Dispatchers.IO).launch {
-            val (resId) = resources[!ambientMode]!!
-            sizeCache.computeIfAbsent(resId) {
-                context.resources.openRawResource(resId).use { it.readBytes() } to BitmapFactory.decodeResource(context.resources, resId).size
-            }
-        }
-    }
 
     val transition = updateTransition(
         targetState = ambientMode to resources[ambientMode]!!,
         label = "LRTRouteMapAmbientCrossfade"
     )
 
-    LaunchedEffect (transition.currentState) {
-        val (resId) = transition.currentState.second
-        val (bytes, size) = CoroutineScope(Dispatchers.IO).async {
-            sizeCache.computeIfAbsent(resId) {
-                context.resources.openRawResource(resId).use { it.readBytes() } to BitmapFactory.decodeResource(context.resources, resId).size
-            }
-        }.await()
-        state.setSubsamplingImage(
-            imageSource = ImageSource.fromByteArray(bytes),
-            imageInfo = ImageInfo(size, "image/png")
-        )
+    LaunchedEffect (transition.targetState) {
+        loaded = false
+    }
+
+    LaunchedEffect (loaded) {
+        if (loaded) {
+            val resId = transition.currentState.second
+            state.setSubsamplingImage(
+                imageSource = ImageSource.fromResource(context, resId)
+            )
+        }
     }
 
     Box(
@@ -721,7 +672,7 @@ fun LRTRouteMapMapInterface(
                         easing = FastOutSlowInEasing
                     ),
                     contentKey = { (a) -> a },
-                ) { (_, imageData) ->
+                ) { (_, resId) ->
                     AsyncImage(
                         modifier = Modifier
                             .matchParentSize()
@@ -732,7 +683,9 @@ fun LRTRouteMapMapInterface(
                                     placeable.place(placeable.width / 2, placeable.height / 2)
                                 }
                             },
-                        model = imageData.imageRequest,
+                        model = ImageRequest.Builder(context)
+                            .data(resId)
+                            .build(),
                         onSuccess = {
                             scope.launch { loaded = true }
                             state.zoomable.setContentSize(it.painter.intrinsicSize.roundToIntSize())

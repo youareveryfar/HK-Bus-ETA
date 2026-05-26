@@ -22,10 +22,9 @@ package com.loohp.hkbuseta.utils
 
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.geometry.Size
-import coil3.request.ImageRequest
-import coil3.request.maxBitmapSize
-import coil3.size.Dimension
 import com.github.panpf.zoomimage.compose.zoom.ZoomableState
+import com.github.panpf.zoomimage.subsampling.ComposeResourceImageSource
+import com.github.panpf.zoomimage.subsampling.ImageSource
 import com.github.panpf.zoomimage.util.IntSizeCompat
 import com.github.panpf.zoomimage.zoom.ContentScaleCompat
 import com.github.panpf.zoomimage.zoom.ScalesCalculator
@@ -112,6 +111,6 @@ fun ScalesCalculator.Companion.predefined(minScale: Float, mediumScale: Float, m
     return PredefinedScalesCalculator(minScale, mediumScale, maxScale)
 }
 
-fun ImageRequest.Builder.unrestrictedBitmapSize(): ImageRequest. Builder {
-    return maxBitmapSize(coil3.size.Size(Dimension.Undefined, Dimension.Undefined))
+fun ImageSource.Companion.fromResourcePath(path: String): ComposeResourceImageSource.Factory {
+    return ComposeResourceImageSource.Factory(path)
 }

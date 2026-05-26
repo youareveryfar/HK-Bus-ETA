@@ -1786,6 +1786,9 @@ fun ETAElement(
     }
 
     Column (
+        modifier = Modifier.applyIf(composePlatform.browserEnvironment) {
+            offset(y = 5.dp)
+        },
         horizontalAlignment = Alignment.End,
         verticalArrangement = Arrangement.Center
     ) {
